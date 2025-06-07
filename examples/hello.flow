@@ -1,0 +1,13 @@
+# Hello World in FlowLang
+show "Hello, FlowLang!"
+show "Welcome to the future of programming!"
+
+# Variables
+let name be "World"
+show "Hello, " + name + "!"
+
+# Numbers
+let x be 42
+let y be 3.14
+show "The answer is " + x
+show "Pi is approximately " + y

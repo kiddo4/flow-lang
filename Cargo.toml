@@ -1,0 +1,28 @@
+[package]
+name = "flowlang"
+version = "0.1.0"
+edition = "2021"
+authors = ["FlowLang Team"]
+description = "FlowLang - A modern, human-friendly programming language"
+license = "MIT"
+repository = "https://github.com/flowlang/flowlang"
+keywords = ["programming-language", "compiler", "interpreter"]
+categories = ["development-tools"]
+
+[lib]
+name = "flowlang"
+path = "src/lib.rs"
+
+[[bin]]
+name = "flowlang"
+path = "src/main.rs"
+
+[dependencies]
+clap = { version = "4.0", features = ["derive"] }
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"
+thiserror = "1.0"
+colored = "2.0"
+
+[dev-dependencies]
+pretty_assertions = "1.4"

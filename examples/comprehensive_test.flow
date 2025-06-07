@@ -1,0 +1,201 @@
+// FlowLang Comprehensive Test
+// This file demonstrates all implemented features from Phases 1, 2, and 3
+
+// Phase 1: Enhanced Functions with Default Parameters and Variable Arguments
+fn greet(name = "World", prefix = "Hello") {
+    print(prefix + ", " + name + "!")
+}
+
+// Call with different argument combinations
+greet()
+greet("Alice")
+greet("Bob", "Hi")
+
+// Function with variadic parameters (basic implementation)
+fn sum_numbers(first, ...rest) {
+    let total = first
+    // Note: Full variadic support requires more implementation
+    return total
+}
+
+let result = sum_numbers(10, 20, 30)
+print("Sum result: " + result)
+
+// Lambda expressions
+let square = (x) => x * x
+let add = (a, b) => a + b
+
+print("Square of 5: " + square(5))
+print("Add 3 + 7: " + add(3, 7))
+
+// Phase 1: Collections (Arrays and Objects)
+let numbers = [1, 2, 3, 4, 5]
+let person = {
+    "name": "Alice",
+    "age": 30,
+    "city": "New York"
+}
+
+print("Numbers array: " + numbers)
+print("Person object: " + person)
+
+// Array operations
+numbers.push(6)
+print("After push: " + numbers)
+
+let last = numbers.pop()
+print("Popped: " + last)
+print("After pop: " + numbers)
+
+// Object operations
+print("Person name: " + person.get("name"))
+person.set("age", 31)
+print("Updated person: " + person)
+
+// Phase 1: Control Flow
+let x = 10
+
+if x > 5 {
+    print("x is greater than 5")
+} else {
+    print("x is not greater than 5")
+}
+
+// While loop
+let i = 0
+while i < 3 {
+    print("Loop iteration: " + i)
+    i = i + 1
+}
+
+// For loop (basic implementation)
+for item in numbers {
+    print("Item: " + item)
+}
+
+// Phase 1: Try-Catch (basic structure - full implementation pending)
+try {
+    let risky = 10 / 0  // This would cause an error
+    print("No error occurred")
+} catch error {
+    print("Caught error: " + error)
+}
+
+// Phase 2: Bytecode VM Features
+// The bytecode VM can execute all the above code when run with --vm flag
+
+// Phase 3: Standard Library Functions
+
+// String functions
+let text = "  Hello, FlowLang!  "
+print("Original: '" + text + "'")
+print("Length: " + str_len(text))
+print("Uppercase: " + str_upper(text))
+print("Lowercase: " + str_lower(text))
+print("Trimmed: '" + str_trim(text) + "'")
+
+let words = str_split(str_trim(text), ", ")
+print("Split words: " + words)
+
+let joined = str_join(words, " | ")
+print("Joined: " + joined)
+
+print("Contains 'Flow': " + str_contains(text, "Flow"))
+print("Starts with '  Hello': " + str_starts_with(text, "  Hello"))
+print("Ends with '!  ': " + str_ends_with(text, "!  "))
+
+let replaced = str_replace(text, "FlowLang", "Programming")
+print("Replaced: " + replaced)
+
+let substring = str_substring(str_trim(text), 0, 5)
+print("Substring (0-5): " + substring)
+
+// Array functions
+let test_array = [1, 2, 3, 4, 5]
+print("Array length: " + array_len(test_array))
+
+let pushed_array = array_push(test_array, 6)
+print("After push: " + pushed_array)
+
+let popped_value = array_pop(test_array)
+print("Popped value: " + popped_value)
+
+let sliced = array_slice(test_array, 1, 4)
+print("Sliced (1-4): " + sliced)
+
+// Object functions
+let test_object = {
+    "a": 1,
+    "b": 2,
+    "c": 3
+}
+
+let keys = object_keys(test_object)
+print("Object keys: " + keys)
+
+let values = object_values(test_object)
+print("Object values: " + values)
+
+// Math functions
+print("Absolute value of -42: " + abs(-42))
+print("Minimum of 5, 3, 8: " + min(5, 3, 8))
+print("Maximum of 5, 3, 8: " + max(5, 3, 8))
+print("Floor of 3.7: " + floor(3.7))
+print("Ceiling of 3.2: " + ceil(3.2))
+print("Round 3.6: " + round(3.6))
+print("Square root of 16: " + sqrt(16))
+print("2 to the power of 3: " + pow(2, 3))
+print("Random number: " + random())
+
+// Type functions
+print("Type of 42: " + type_of(42))
+print("Type of 'hello': " + type_of("hello"))
+print("Type of true: " + type_of(true))
+print("Type of [1,2,3]: " + type_of([1, 2, 3]))
+print("Type of {}: " + type_of({}))
+
+// Type conversions
+print("String to int: " + to_int("123"))
+print("Int to float: " + to_float(42))
+print("String to bool: " + to_bool("hello"))
+print("Number to string: " + to_string(3.14))
+
+// Time functions
+let current_time = now()
+print("Current timestamp: " + current_time)
+
+// IO functions (be careful with these in tests)
+// write_file("test.txt", "Hello from FlowLang!")
+// let file_content = read_file("test.txt")
+// print("File content: " + file_content)
+// print("File exists: " + file_exists("test.txt"))
+
+// Advanced features demonstration
+let complex_data = {
+    "users": [
+        {"name": "Alice", "age": 25},
+        {"name": "Bob", "age": 30},
+        {"name": "Charlie", "age": 35}
+    ],
+    "metadata": {
+        "version": "1.0",
+        "created": now()
+    }
+}
+
+print("Complex data structure: " + complex_data)
+
+// Function composition
+let compose = (f, g) => (x) => f(g(x))
+let double = (x) => x * 2
+let increment = (x) => x + 1
+let double_then_increment = compose(increment, double)
+
+print("Composed function result: " + double_then_increment(5))
+
+// Assertions for testing
+assert(true, "This should pass")
+assert(1 + 1 == 2, "Basic math should work")
+assert(str_len("hello") == 5, "String length should be correct")
+
+print("All tests completed successfully!")

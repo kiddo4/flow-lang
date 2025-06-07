@@ -1,0 +1,12 @@
+/Users/kiddo/Documents/programming-lang/target/debug/deps/libanstyle-0dc2c19be51af139.rmeta: /Users/kiddo/.cargo/registry/src/index.crates.io-6f17d22bba15001f/anstyle-1.0.11/src/lib.rs /Users/kiddo/.cargo/registry/src/index.crates.io-6f17d22bba15001f/anstyle-1.0.11/src/macros.rs /Users/kiddo/.cargo/registry/src/index.crates.io-6f17d22bba15001f/anstyle-1.0.11/src/color.rs /Users/kiddo/.cargo/registry/src/index.crates.io-6f17d22bba15001f/anstyle-1.0.11/src/effect.rs /Users/kiddo/.cargo/registry/src/index.crates.io-6f17d22bba15001f/anstyle-1.0.11/src/reset.rs /Users/kiddo/.cargo/registry/src/index.crates.io-6f17d22bba15001f/anstyle-1.0.11/src/style.rs
+
+/Users/kiddo/Documents/programming-lang/target/debug/deps/libanstyle-0dc2c19be51af139.rlib: /Users/kiddo/.cargo/registry/src/index.crates.io-6f17d22bba15001f/anstyle-1.0.11/src/lib.rs /Users/kiddo/.cargo/registry/src/index.crates.io-6f17d22bba15001f/anstyle-1.0.11/src/macros.rs /Users/kiddo/.cargo/registry/src/index.crates.io-6f17d22bba15001f/anstyle-1.0.11/src/color.rs /Users/kiddo/.cargo/registry/src/index.crates.io-6f17d22bba15001f/anstyle-1.0.11/src/effect.rs /Users/kiddo/.cargo/registry/src/index.crates.io-6f17d22bba15001f/anstyle-1.0.11/src/reset.rs /Users/kiddo/.cargo/registry/src/index.crates.io-6f17d22bba15001f/anstyle-1.0.11/src/style.rs
+
+/Users/kiddo/Documents/programming-lang/target/debug/deps/anstyle-0dc2c19be51af139.d: /Users/kiddo/.cargo/registry/src/index.crates.io-6f17d22bba15001f/anstyle-1.0.11/src/lib.rs /Users/kiddo/.cargo/registry/src/index.crates.io-6f17d22bba15001f/anstyle-1.0.11/src/macros.rs /Users/kiddo/.cargo/registry/src/index.crates.io-6f17d22bba15001f/anstyle-1.0.11/src/color.rs /Users/kiddo/.cargo/registry/src/index.crates.io-6f17d22bba15001f/anstyle-1.0.11/src/effect.rs /Users/kiddo/.cargo/registry/src/index.crates.io-6f17d22bba15001f/anstyle-1.0.11/src/reset.rs /Users/kiddo/.cargo/registry/src/index.crates.io-6f17d22bba15001f/anstyle-1.0.11/src/style.rs
+
+/Users/kiddo/.cargo/registry/src/index.crates.io-6f17d22bba15001f/anstyle-1.0.11/src/lib.rs:
+/Users/kiddo/.cargo/registry/src/index.crates.io-6f17d22bba15001f/anstyle-1.0.11/src/macros.rs:
+/Users/kiddo/.cargo/registry/src/index.crates.io-6f17d22bba15001f/anstyle-1.0.11/src/color.rs:
+/Users/kiddo/.cargo/registry/src/index.crates.io-6f17d22bba15001f/anstyle-1.0.11/src/effect.rs:
+/Users/kiddo/.cargo/registry/src/index.crates.io-6f17d22bba15001f/anstyle-1.0.11/src/reset.rs:
+/Users/kiddo/.cargo/registry/src/index.crates.io-6f17d22bba15001f/anstyle-1.0.11/src/style.rs:
