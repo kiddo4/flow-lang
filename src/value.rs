@@ -120,6 +120,19 @@ impl FlowArray {
             }
         });
     }
+
+    pub fn slice(&self, start: usize, end: usize) -> Result<FlowArray, String> {
+        if start > end {
+            return Err("Start index cannot be greater than end index".to_string());
+        }
+        if start > self.elements.len() {
+            return Err("Start index out of bounds".to_string());
+        }
+        let end = end.min(self.elements.len());
+        Ok(FlowArray {
+            elements: self.elements[start..end].to_vec(),
+        })
+    }
 }
 
 impl FlowObject {

@@ -97,4 +97,12 @@ impl FlowError {
     }
 }
 
+impl From<std::io::Error> for FlowError {
+    fn from(error: std::io::Error) -> Self {
+        FlowError::IoError {
+            message: error.to_string(),
+        }
+    }
+}
+
 pub type Result<T> = std::result::Result<T, FlowError>;

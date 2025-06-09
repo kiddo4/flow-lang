@@ -4,7 +4,7 @@ use crate::value::{Value, FlowArray, FlowObject, Environment};
 use std::collections::HashMap;
 
 impl Value {
-    fn is_truthy(&self) -> bool {
+    pub fn is_truthy(&self) -> bool {
         match self {
             Value::Boolean(b) => *b,
             Value::Null => false,
@@ -19,7 +19,7 @@ impl Value {
         }
     }
     
-    fn type_name(&self) -> &'static str {
+    pub fn type_name(&self) -> &'static str {
         match self {
             Value::String(_) => "string",
             Value::Integer(_) => "integer",

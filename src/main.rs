@@ -125,7 +125,7 @@ fn execute_source_vm(source: &str, file_name: &str) {
         }
     };
 
-    let chunk = match compile_program(&ast) {
+    let chunk = match compile_program(&ast.statements) {
         Ok(chunk) => chunk,
         Err(err) => {
             eprintln!("{}: {}", "Compiler Error".red().bold(), err);

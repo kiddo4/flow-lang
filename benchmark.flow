@@ -1,0 +1,89 @@
+# FlowLang Benchmark Program
+# Test various operations for performance comparison
+
+# Fibonacci benchmark (recursive)
+def fibonacci with n do
+    if n <= 1 then
+        return n
+    else
+        return fibonacci(n - 1) + fibonacci(n - 2)
+    end
+end
+
+# Fibonacci benchmark (iterative)
+def fibonacci_iter with n do
+    if n <= 1 then
+        return n
+    end
+    
+    let a be 0
+    let b be 1
+    let i be 2
+    
+    while i <= n do
+        let temp be a + b
+        let a be b
+        let b be temp
+        let i be i + 1
+    end
+    
+    return b
+end
+
+# Prime number check
+def is_prime with n do
+    if n <= 1 then
+        return false
+    end
+    if n <= 3 then
+        return true
+    end
+    if n % 2 == 0 then
+        return false
+    end
+    
+    let i be 3
+    while i * i <= n do
+        if n % i == 0 then
+            return false
+        end
+        let i be i + 2
+    end
+    return true
+end
+
+# Array sum simulation
+def sum_numbers with limit do
+    let sum be 0
+    let i be 1
+    while i <= limit do
+        let sum be sum + i
+        let i be i + 1
+    end
+    return sum
+end
+
+# Main benchmark
+show "FlowLang Benchmark Starting..."
+
+# Test 1: Fibonacci (recursive) - small number to avoid exponential explosion
+show "Test 1: Fibonacci(25) recursive"
+let fib_result be fibonacci(25)
+show "Result: " + fib_result
+
+# Test 2: Fibonacci (iterative) - larger number
+show "Test 2: Fibonacci(1000) iterative"
+let fib_iter_result be fibonacci_iter(1000)
+show "Result: " + fib_iter_result
+
+# Test 3: Prime checking
+show "Test 3: Prime check for 982451653"
+let prime_result be is_prime(982451653)
+show "Is prime: " + prime_result
+
+# Test 4: Sum of numbers
+show "Test 4: Sum of numbers 1 to 100000"
+let sum_result be sum_numbers(100000)
+show "Sum: " + sum_result
+
+show "FlowLang Benchmark Complete!"

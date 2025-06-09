@@ -64,15 +64,10 @@ impl Compiler {
                 self.emit_instruction(Instruction::Pop, 0);
             }
             
-            Statement::VarDeclaration { name, initializer } => {
-                if let Some(init) = initializer {
-                    self.compile_expression(init)?;
-                } else {
-                    self.emit_constant(Value::Null, 0);
-                }
+            Statement::VariableDeclaration { name, value } => {
+                self.compile_expression(value)?;
                 
                 if self.scope_depth == 0 {
-                    let name_const = self.make_constant(Value::String(name.clone()));
                     self.emit_instruction(Instruction::StoreGlobal(name.clone()), 0);
                 } else {
                     self.add_local(name.clone());
@@ -89,14 +84,18 @@ impl Compiler {
                 let else_jump = self.emit_jump(Instruction::JumpIfFalse(0));
                 self.emit_instruction(Instruction::Pop, 0);
                 
-                self.compile_statement(then_branch)?;
+                for stmt in then_branch {
+                    self.compile_statement(stmt)?;
+                }
                 
-                if let Some(else_stmt) = else_branch {
+                if let Some(else_stmts) = else_branch {
                     let end_jump = self.emit_jump(Instruction::Jump(0));
                     self.patch_jump(else_jump);
                     self.emit_instruction(Instruction::Pop, 0);
                     
-                    self.compile_statement(else_stmt)?;
+                    for stmt in else_stmts {
+                        self.compile_statement(stmt)?;
+                    }
                     self.patch_jump(end_jump);
                 } else {
                     self.patch_jump(else_jump);
@@ -113,7 +112,9 @@ impl Compiler {
                 let exit_jump = self.emit_jump(Instruction::JumpIfFalse(0));
                 self.emit_instruction(Instruction::Pop, 0);
                 
-                self.compile_statement(body)?;
+                for stmt in body {
+                    self.compile_statement(stmt)?;
+                }
                 self.emit_loop(loop_start);
                 
                 self.patch_jump(exit_jump);
@@ -128,10 +129,16 @@ impl Compiler {
                 self.loop_starts.pop();
             }
             
-            Statement::For { variable, iterable, body } => {
-                // For now, implement basic for loop over arrays
-                self.compile_expression(iterable)?;
-                // TODO: Implement proper iteration protocol
+            Statement::For { variable, start, end, body } => {
+                // Compile start expression
+                self.compile_expression(start)?;
+                // Compile end expression
+                self.compile_expression(end)?;
+                // TODO: Implement proper for loop with range
+                for stmt in body {
+                    self.compile_statement(stmt)?;
+                }
+                self.emit_instruction(Instruction::Pop, 0);
                 self.emit_instruction(Instruction::Pop, 0);
             }
             
@@ -144,15 +151,7 @@ impl Compiler {
                 self.emit_instruction(Instruction::Return, 0);
             }
             
-            Statement::Block(statements) => {
-                self.begin_scope();
-                for stmt in statements {
-                    self.compile_statement(stmt)?;
-                }
-                self.end_scope();
-            }
-            
-            Statement::Print(expr) => {
+            Statement::Show(expr) => {
                 self.compile_expression(expr)?;
                 self.emit_instruction(Instruction::Print, 0);
             }
@@ -160,6 +159,11 @@ impl Compiler {
             Statement::Export { .. } => {
                 // TODO: Implement module system
                 return Err(FlowError::compilation_error("Export statements not yet implemented"));
+            }
+            
+            Statement::Import { .. } => {
+                // TODO: Implement module system
+                return Err(FlowError::compilation_error("Import statements not yet implemented"));
             }
             
             Statement::TryCatch { .. } => {
@@ -175,11 +179,19 @@ impl Compiler {
         match expression {
             Expression::Literal(literal) => {
                 let value = match literal {
+                    Literal::String(s) => Value::String(s.clone()),
                     Literal::Integer(i) => Value::Integer(*i),
                     Literal::Float(f) => Value::Float(*f),
-                    Literal::String(s) => Value::String(s.clone()),
                     Literal::Boolean(b) => Value::Boolean(*b),
                     Literal::Null => Value::Null,
+                    Literal::Array(_) => {
+                        // TODO: Implement array literal compilation
+                        return Err(FlowError::compilation_error("Array literals not yet implemented"));
+                    },
+                    Literal::Object(_) => {
+                        // TODO: Implement object literal compilation
+                        return Err(FlowError::compilation_error("Object literals not yet implemented"));
+                    },
                 };
                 self.emit_constant(value, 0);
             }
@@ -228,18 +240,9 @@ impl Compiler {
                 }
             }
             
-            Expression::Assignment { name, value } => {
-                self.compile_expression(value)?;
-                
-                if let Some(local_index) = self.resolve_local(name) {
-                    self.emit_instruction(Instruction::StoreLocal(local_index), 0);
-                } else {
-                    self.emit_instruction(Instruction::StoreGlobal(name.clone()), 0);
-                }
-            }
-            
-            Expression::Call { callee, arguments } => {
-                self.compile_expression(callee)?;
+            Expression::FunctionCall { name, arguments } => {
+                // Load function by name
+                self.emit_instruction(Instruction::LoadGlobal(name.clone()), 0);
                 
                 for arg in arguments {
                     self.compile_expression(arg)?;
@@ -248,25 +251,41 @@ impl Compiler {
                 self.emit_instruction(Instruction::Call(arguments.len()), 0);
             }
             
-            Expression::Array(elements) => {
+            Expression::MethodCall { object, method, arguments } => {
+                self.compile_expression(object)?;
+                
+                for arg in arguments {
+                    self.compile_expression(arg)?;
+                }
+                
+                self.emit_instruction(Instruction::CallMethod(method.clone()), 0);
+            }
+            
+            Expression::Array { elements } => {
                 for element in elements {
                     self.compile_expression(element)?;
                 }
-                self.emit_instruction(Instruction::MakeArray(elements.len()), 0);
+                self.emit_instruction(Instruction::NewArray(elements.len()), 0);
             }
             
-            Expression::Object(pairs) => {
-                for (key, value) in pairs {
+            Expression::Object { properties } => {
+                for (key, value) in properties {
                     self.emit_constant(Value::String(key.clone()), 0);
                     self.compile_expression(value)?;
                 }
-                self.emit_instruction(Instruction::MakeObject(pairs.len()), 0);
+                self.emit_instruction(Instruction::NewObject, 0);
             }
             
             Expression::Index { object, index } => {
                 self.compile_expression(object)?;
                 self.compile_expression(index)?;
-                self.emit_instruction(Instruction::Index, 0);
+                self.emit_instruction(Instruction::GetIndex, 0);
+            }
+            
+            Expression::PropertyAccess { object, property } => {
+                self.compile_expression(object)?;
+                self.emit_constant(Value::String(property.clone()), 0);
+                self.emit_instruction(Instruction::GetProperty(property.clone()), 0);
             }
             
             Expression::Lambda { parameters, body } => {
@@ -323,7 +342,7 @@ impl Compiler {
     
     fn emit_constant(&mut self, value: Value, line: usize) {
         let constant_index = self.make_constant(value);
-        self.emit_instruction(Instruction::LoadConst(constant_index), line);
+        self.emit_instruction(Instruction::LoadConstant(constant_index), line);
     }
     
     fn make_constant(&mut self, value: Value) -> usize {
