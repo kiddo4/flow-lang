@@ -96,6 +96,7 @@ pub struct Parameter {
 pub enum Literal {
     String(String),
     Integer(i64),
+    BigInteger(crate::bigint::BigInt),
     Float(f64),
     Boolean(bool),
     Null,
@@ -167,6 +168,7 @@ impl std::fmt::Display for Literal {
         match self {
             Literal::String(s) => write!(f, "\"{}\"", s),
             Literal::Integer(i) => write!(f, "{}", i),
+            Literal::BigInteger(bi) => write!(f, "{}", bi),
             Literal::Float(fl) => write!(f, "{}", fl),
             Literal::Boolean(b) => write!(f, "{}", b),
             Literal::Null => write!(f, "null"),

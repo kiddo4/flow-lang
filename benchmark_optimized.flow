@@ -1,0 +1,142 @@
+// Comprehensive benchmark for optimized FlowLang VM
+// This tests various performance aspects
+
+// Test 1: Arithmetic intensive operations
+def fibonacci_recursive(n) with
+    if n <= 1 then
+        return n
+    else
+        return fibonacci_recursive(n - 1) + fibonacci_recursive(n - 2)
+    end
+end
+
+def fibonacci_iterative(n) with
+    let a be 0
+    let b be 1
+    let i be 0
+    
+    while i < n do
+        let temp be a + b
+        let a be b
+        let b be temp
+        let i be i + 1
+    end
+    
+    return a
+end
+
+// Test 2: Large number arithmetic (tests BigInt)
+def large_factorial(n) with
+    let result be 1
+    let i be 1
+    
+    while i <= n do
+        let result be result * i
+        let i be i + 1
+    end
+    
+    return result
+end
+
+// Test 3: String operations
+def string_concat_test(count) with
+    let result be ""
+    let i be 0
+    
+    while i < count do
+        let result be result + "test"
+        let i be i + 1
+    end
+    
+    return result
+end
+
+// Test 4: Function call overhead
+def simple_add(a, b) with
+    return a + b
+end
+
+def call_overhead_test(iterations) with
+    let sum be 0
+    let i be 0
+    
+    while i < iterations do
+        let sum be simple_add(sum, i)
+        let i be i + 1
+    end
+    
+    return sum
+end
+
+// Test 5: Control flow intensive
+def prime_check(n) with
+    if n <= 1 then
+        return false
+    end
+    
+    if n <= 3 then
+        return true
+    end
+    
+    if n % 2 == 0 then
+        return false
+    end
+    
+    let i be 3
+    while i * i <= n do
+        if n % i == 0 then
+            return false
+        end
+        let i be i + 2
+    end
+    
+    return true
+end
+
+def count_primes(limit) with
+    let count be 0
+    let i be 2
+    
+    while i < limit do
+        if prime_check(i) then
+            let count be count + 1
+        end
+        let i be i + 1
+    end
+    
+    return count
+end
+
+// Run benchmarks
+show "=== FlowLang Optimized VM Benchmark ==="
+
+// Fibonacci tests
+show "Testing Fibonacci (recursive)..."
+let fib_result be fibonacci_recursive(35)
+show "Fibonacci(35) = " + fib_result
+
+show "Testing Fibonacci (iterative)..."
+let fib_iter_result be fibonacci_iterative(1000)
+show "Fibonacci(1000) iterative = " + fib_iter_result
+
+// Large number test
+show "Testing large factorial..."
+let factorial_result be large_factorial(100)
+show "100! = " + factorial_result
+
+// String operations
+show "Testing string concatenation..."
+let string_result be string_concat_test(1000)
+show "String concat result length: " + string_result
+
+// Function call overhead
+show "Testing function call overhead..."
+let call_result be call_overhead_test(10000)
+show "Call overhead test result: " + call_result
+
+// Prime counting
+show "Testing prime counting..."
+let prime_count be count_primes(1000)
+show "Primes under 1000: " + prime_count
+
+show "=== Benchmark Complete ==="

@@ -3,10 +3,12 @@
 use std::collections::HashMap;
 use std::fmt;
 use crate::ast::{Statement, Expression, Parameter};
+use crate::bigint::BigInt;
 
 #[derive(Debug, Clone, PartialEq)]
 pub enum Value {
     Integer(i64),
+    BigInteger(BigInt),
     Float(f64),
     String(String),
     Boolean(bool),
@@ -268,10 +270,44 @@ impl Environment {
     }
 }
 
+impl Value {
+    pub fn type_name(&self) -> &'static str {
+        match self {
+            Value::Integer(_) => "integer",
+            Value::BigInteger(_) => "biginteger",
+            Value::Float(_) => "float",
+            Value::String(_) => "string",
+            Value::Boolean(_) => "boolean",
+            Value::Null => "null",
+            Value::Array(_) => "array",
+            Value::Object(_) => "object",
+            Value::Function { .. } => "function",
+            Value::Lambda { .. } => "lambda",
+            Value::BytecodeFunction { .. } => "bytecode_function",
+        }
+    }
+    
+    pub fn to_bigint(&self) -> Option<BigInt> {
+        match self {
+            Value::Integer(i) => Some(BigInt::from_i64(*i)),
+            Value::BigInteger(bi) => Some(bi.clone()),
+            _ => None,
+        }
+    }
+    
+    pub fn promote_to_bigint(self) -> Value {
+        match self {
+            Value::Integer(i) => Value::BigInteger(BigInt::from_i64(i)),
+            other => other,
+        }
+    }
+}
+
 impl fmt::Display for Value {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
             Value::Integer(i) => write!(f, "{}", i),
+            Value::BigInteger(bi) => write!(f, "{}", bi),
             Value::Float(fl) => write!(f, "{}", fl),
             Value::String(s) => write!(f, "{}", s),
             Value::Boolean(b) => write!(f, "{}", b),

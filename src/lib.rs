@@ -37,6 +37,9 @@ pub mod interpreter;
 pub mod lexer;
 pub mod parser;
 pub mod value;
+pub mod bytecode;
+pub mod bigint;
+pub mod optimized_vm;
 
 pub use ast::*;
 pub use error::*;

@@ -181,6 +181,7 @@ impl Compiler {
                 let value = match literal {
                     Literal::String(s) => Value::String(s.clone()),
                     Literal::Integer(i) => Value::Integer(*i),
+            Literal::BigInteger(bi) => Value::BigInteger(bi.clone()),
                     Literal::Float(f) => Value::Float(*f),
                     Literal::Boolean(b) => Value::Boolean(*b),
                     Literal::Null => Value::Null,

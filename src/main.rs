@@ -13,6 +13,8 @@ mod bytecode;
 mod compiler;
 mod stdlib;
 mod value;
+mod bigint;
+mod optimized_vm;
 
 use crate::lexer::Lexer;
 use crate::parser::Parser;

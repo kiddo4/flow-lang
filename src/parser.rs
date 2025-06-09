@@ -548,6 +548,7 @@ impl Parser {
         match self.advance() {
             Token::String(s) => Ok(Expression::Literal(Literal::String(s.clone()))),
             Token::Integer(i) => Ok(Expression::Literal(Literal::Integer(*i))),
+            Token::BigInteger(bi) => Ok(Expression::Literal(Literal::BigInteger(bi.clone()))),
             Token::Float(f) => Ok(Expression::Literal(Literal::Float(*f))),
             Token::Boolean(b) => Ok(Expression::Literal(Literal::Boolean(*b))),
             Token::Identifier(name) => Ok(Expression::Identifier(name.clone())),

@@ -1,0 +1,29 @@
+// Test BigInt functionality
+print("Testing BigInt functionality...")
+
+// Test large factorial
+def factorial(n) with
+    let result be 1
+    let i be 1
+    
+    while i <= n do
+        let result be result * i
+        let i be i + 1
+    end
+    
+    return result
+end
+
+// Test with a number that will cause overflow in regular integers
+let big_factorial be factorial(50)
+print("50! = ")
+print(big_factorial)
+
+// Test large addition
+let big_num1 be 999999999999999999999999999
+let big_num2 be 888888888888888888888888888
+let big_sum be big_num1 + big_num2
+print("Large addition test:")
+print(big_sum)
+
+print("BigInt tests completed!")

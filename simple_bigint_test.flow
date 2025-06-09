@@ -1,0 +1,14 @@
+# Simple BigInt test
+print("Testing BigInt functionality...")
+
+# Test with a large number that exceeds i64 range
+let big_num be 999999999999999999999999999
+print("Large number:")
+print(big_num)
+
+# Test addition with large numbers
+let result be big_num + 123456789
+print("Addition result:")
+print(result)
+
+print("BigInt test completed!")

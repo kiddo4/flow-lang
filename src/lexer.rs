@@ -5,6 +5,7 @@ pub enum Token {
     // Literals
     String(String),
     Integer(i64),
+    BigInteger(crate::bigint::BigInt),
     Float(f64),
     Boolean(bool),
     
@@ -312,11 +313,17 @@ impl Lexer {
         } else {
             match value.parse::<i64>() {
                 Ok(i) => Ok(Token::Integer(i)),
-                Err(_) => Err(FlowError::lexer_error(
-                    self.line,
-                    self.column,
-                    format!("Invalid integer literal: {}", value),
-                )),
+                Err(_) => {
+                    // Try parsing as BigInt for large numbers
+                    match crate::bigint::BigInt::from_string(&value) {
+                        Ok(big_int) => Ok(Token::BigInteger(big_int)),
+                        Err(_) => Err(FlowError::lexer_error(
+                            self.line,
+                            self.column,
+                            format!("Invalid integer literal: {}", value),
+                        )),
+                    }
+                }
             }
         }
     }

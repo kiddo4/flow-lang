@@ -9,6 +9,7 @@ impl Value {
             Value::Boolean(b) => *b,
             Value::Null => false,
             Value::Integer(i) => *i != 0,
+            Value::BigInteger(bi) => !bi.is_zero(),
             Value::Float(f) => *f != 0.0,
             Value::String(s) => !s.is_empty(),
             Value::Array(arr) => !arr.is_empty(),
@@ -19,20 +20,23 @@ impl Value {
         }
     }
     
-    pub fn type_name(&self) -> &'static str {
+    pub fn to_string(&self) -> String {
         match self {
-            Value::String(_) => "string",
-            Value::Integer(_) => "integer",
-            Value::Float(_) => "float",
-            Value::Boolean(_) => "boolean",
-            Value::Array(_) => "array",
-            Value::Object(_) => "object",
-            Value::Null => "null",
-            Value::Function { .. } => "function",
-            Value::Lambda { .. } => "lambda",
-            Value::BytecodeFunction { .. } => "bytecode_function",
+            Value::String(s) => s.clone(),
+            Value::Integer(i) => i.to_string(),
+            Value::BigInteger(bi) => bi.to_string(),
+            Value::Float(f) => f.to_string(),
+            Value::Boolean(b) => b.to_string(),
+            Value::Array(arr) => format!("{}", arr),
+            Value::Object(obj) => format!("{}", obj),
+            Value::Null => "null".to_string(),
+            Value::Function { name, .. } => format!("<function {}>", name),
+            Value::Lambda { .. } => "<lambda>".to_string(),
+            Value::BytecodeFunction { .. } => "<bytecode function>".to_string(),
         }
     }
+    
+    // type_name method moved to value.rs to avoid duplication
 }
 
 
@@ -276,6 +280,7 @@ impl Interpreter {
         match literal {
             Literal::String(s) => Value::String(s.clone()),
             Literal::Integer(i) => Value::Integer(*i),
+            Literal::BigInteger(bi) => Value::BigInteger(bi.clone()),
             Literal::Float(f) => Value::Float(*f),
             Literal::Boolean(b) => Value::Boolean(*b),
             Literal::Null => Value::Null,
@@ -304,6 +309,9 @@ impl Interpreter {
                 (Value::Float(a), Value::Float(b)) => Ok(Value::Float(a + b)),
                 (Value::Integer(a), Value::Float(b)) => Ok(Value::Float(*a as f64 + b)),
                 (Value::Float(a), Value::Integer(b)) => Ok(Value::Float(a + *b as f64)),
+                (Value::BigInteger(a), Value::BigInteger(b)) => Ok(Value::BigInteger(a.clone() + b.clone())),
+                (Value::BigInteger(a), Value::Integer(b)) => Ok(Value::BigInteger(a.clone() + crate::bigint::BigInt::from_i64(*b))),
+                (Value::Integer(a), Value::BigInteger(b)) => Ok(Value::BigInteger(crate::bigint::BigInt::from_i64(*a) + b.clone())),
                 (Value::String(a), Value::String(b)) => Ok(Value::String(format!("{}{}", a, b))),
                 (Value::String(a), b) => Ok(Value::String(format!("{}{}", a, b))),
                 (a, Value::String(b)) => Ok(Value::String(format!("{}{}", a, b))),
@@ -315,14 +323,30 @@ impl Interpreter {
                 (Value::Float(a), Value::Float(b)) => Ok(Value::Float(a - b)),
                 (Value::Integer(a), Value::Float(b)) => Ok(Value::Float(*a as f64 - b)),
                 (Value::Float(a), Value::Integer(b)) => Ok(Value::Float(a - *b as f64)),
+                (Value::BigInteger(a), Value::BigInteger(b)) => Ok(Value::BigInteger(a.clone() - b.clone())),
+                (Value::BigInteger(a), Value::Integer(b)) => Ok(Value::BigInteger(a.clone() - crate::bigint::BigInt::from_i64(*b))),
+                (Value::Integer(a), Value::BigInteger(b)) => Ok(Value::BigInteger(crate::bigint::BigInt::from_i64(*a) - b.clone())),
                 _ => Err(FlowError::type_error(format!("Cannot subtract {} and {}", left.type_name(), right.type_name()))),
             },
             
             BinaryOperator::Multiply => match (left, right) {
-                (Value::Integer(a), Value::Integer(b)) => Ok(Value::Integer(a * b)),
+                (Value::Integer(a), Value::Integer(b)) => {
+                    match a.checked_mul(*b) {
+                        Some(result) => Ok(Value::Integer(result)),
+                        None => {
+                            // Overflow, promote to BigInt
+                            let big_a = crate::bigint::BigInt::from_i64(*a);
+                            let big_b = crate::bigint::BigInt::from_i64(*b);
+                            Ok(Value::BigInteger(big_a * big_b))
+                        }
+                    }
+                },
                 (Value::Float(a), Value::Float(b)) => Ok(Value::Float(a * b)),
                 (Value::Integer(a), Value::Float(b)) => Ok(Value::Float(*a as f64 * b)),
                 (Value::Float(a), Value::Integer(b)) => Ok(Value::Float(a * *b as f64)),
+                (Value::BigInteger(a), Value::BigInteger(b)) => Ok(Value::BigInteger(a.clone() * b.clone())),
+                (Value::BigInteger(a), Value::Integer(b)) => Ok(Value::BigInteger(a.clone() * crate::bigint::BigInt::from_i64(*b))),
+                (Value::Integer(a), Value::BigInteger(b)) => Ok(Value::BigInteger(crate::bigint::BigInt::from_i64(*a) * b.clone())),
                 _ => Err(FlowError::type_error(format!("Cannot multiply {} and {}", left.type_name(), right.type_name()))),
             },
             

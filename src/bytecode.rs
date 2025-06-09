@@ -367,16 +367,18 @@ pub struct GCStats {
 
 /// Virtual Machine state
 pub struct VirtualMachine {
-    stack: Vec<Value>,
-    call_stack: Vec<Frame>,
-    chunks: Vec<Chunk>,
-    current_chunk: usize,
-    instruction_pointer: usize,
-    globals: std::collections::HashMap<String, Value>,
-    builtins: HashMap<String, fn(&mut VirtualMachine, &[Value]) -> Result<Value>>,
-    gc_stats: GCStats,
-    gc_threshold: usize,
-    allocated_objects: usize,
+    pub stack: Vec<Value>,
+    pub call_stack: Vec<Frame>,
+    pub chunks: Vec<Chunk>,
+    pub current_chunk: usize,
+    pub instruction_pointer: usize,
+    pub globals: std::collections::HashMap<String, Value>,
+    pub builtins: HashMap<String, fn(&mut VirtualMachine, &[Value]) -> Result<Value>>,
+    pub gc_stats: GCStats,
+    pub gc_threshold: usize,
+    pub allocated_objects: usize,
+    pub locals: Vec<Value>,
+    pub constant_pool: Vec<Value>,
 }
 
 impl VirtualMachine {
@@ -397,6 +399,8 @@ impl VirtualMachine {
             },
             gc_threshold: 1000, // Trigger GC after 1000 allocations
             allocated_objects: 0,
+            locals: Vec::new(),
+            constant_pool: Vec::new(),
         };
         vm.add_builtins();
         vm
@@ -916,6 +920,7 @@ impl VirtualMachine {
             Value::Null => false,
             Value::Float(f) => *f != 0.0,
             Value::Integer(i) => *i != 0,
+            Value::BigInteger(bi) => !bi.is_zero(),
             Value::String(s) => !s.is_empty(),
             Value::Array(array) => !array.elements.is_empty(),
             Value::Object(object) => !object.properties.is_empty(),
@@ -925,10 +930,45 @@ impl VirtualMachine {
     
     fn add_values(&self, a: &Value, b: &Value) -> Result<Value> {
         match (a, b) {
-            (Value::Integer(x), Value::Integer(y)) => Ok(Value::Integer(x + y)),
+            (Value::Integer(x), Value::Integer(y)) => {
+                match x.checked_add(*y) {
+                    Some(result) => Ok(Value::Integer(result)),
+                    None => {
+                        // Overflow, promote to BigInt
+                        let big_a = crate::bigint::BigInt::from_i64(*x);
+                        let big_b = crate::bigint::BigInt::from_i64(*y);
+                        Ok(Value::BigInteger(big_a + big_b))
+                    }
+                }
+            }
+            (Value::BigInteger(x), Value::BigInteger(y)) => {
+                Ok(Value::BigInteger(x.clone() + y.clone()))
+            }
+            (Value::Integer(x), Value::BigInteger(y)) => {
+                let big_x = crate::bigint::BigInt::from_i64(*x);
+                Ok(Value::BigInteger(big_x + y.clone()))
+            }
+            (Value::BigInteger(x), Value::Integer(y)) => {
+                let big_y = crate::bigint::BigInt::from_i64(*y);
+                Ok(Value::BigInteger(x.clone() + big_y))
+            }
             (Value::Float(x), Value::Float(y)) => Ok(Value::Float(x + y)),
             (Value::Integer(x), Value::Float(y)) => Ok(Value::Float(*x as f64 + y)),
             (Value::Float(x), Value::Integer(y)) => Ok(Value::Float(x + *y as f64)),
+            (Value::BigInteger(x), Value::Float(y)) => {
+                if let Some(int_val) = x.to_i64() {
+                    Ok(Value::Float(int_val as f64 + y))
+                } else {
+                    Err(FlowError::runtime_error("BigInteger too large for float conversion"))
+                }
+            }
+            (Value::Float(x), Value::BigInteger(y)) => {
+                if let Some(int_val) = y.to_i64() {
+                    Ok(Value::Float(x + int_val as f64))
+                } else {
+                    Err(FlowError::runtime_error("BigInteger too large for float conversion"))
+                }
+            }
             (Value::String(x), Value::String(y)) => Ok(Value::String(format!("{}{}", x, y))),
             _ => Err(FlowError::type_error(format!(
                 "Cannot add {} and {}",
@@ -944,6 +984,17 @@ impl VirtualMachine {
             (Value::Float(x), Value::Float(y)) => Ok(Value::Float(x - y)),
             (Value::Integer(x), Value::Float(y)) => Ok(Value::Float(*x as f64 - y)),
             (Value::Float(x), Value::Integer(y)) => Ok(Value::Float(x - *y as f64)),
+            (Value::BigInteger(x), Value::BigInteger(y)) => {
+                Ok(Value::BigInteger(x.clone() - y.clone()))
+            }
+            (Value::Integer(x), Value::BigInteger(y)) => {
+                let big_x = crate::bigint::BigInt::from_i64(*x);
+                Ok(Value::BigInteger(big_x - y.clone()))
+            }
+            (Value::BigInteger(x), Value::Integer(y)) => {
+                let big_y = crate::bigint::BigInt::from_i64(*y);
+                Ok(Value::BigInteger(x.clone() - big_y))
+            }
             _ => Err(FlowError::type_error(format!(
                 "Cannot subtract {} and {}",
                 a.type_name(),
@@ -954,10 +1005,45 @@ impl VirtualMachine {
     
     fn multiply_values(&self, a: &Value, b: &Value) -> Result<Value> {
         match (a, b) {
-            (Value::Integer(x), Value::Integer(y)) => Ok(Value::Integer(x * y)),
+            (Value::Integer(x), Value::Integer(y)) => {
+                match x.checked_mul(*y) {
+                    Some(result) => Ok(Value::Integer(result)),
+                    None => {
+                        // Overflow, promote to BigInt
+                        let big_a = crate::bigint::BigInt::from_i64(*x);
+                        let big_b = crate::bigint::BigInt::from_i64(*y);
+                        Ok(Value::BigInteger(big_a * big_b))
+                    }
+                }
+            }
+            (Value::BigInteger(x), Value::BigInteger(y)) => {
+                Ok(Value::BigInteger(x.clone() * y.clone()))
+            }
+            (Value::Integer(x), Value::BigInteger(y)) => {
+                let big_x = crate::bigint::BigInt::from_i64(*x);
+                Ok(Value::BigInteger(big_x * y.clone()))
+            }
+            (Value::BigInteger(x), Value::Integer(y)) => {
+                let big_y = crate::bigint::BigInt::from_i64(*y);
+                Ok(Value::BigInteger(x.clone() * big_y))
+            }
             (Value::Float(x), Value::Float(y)) => Ok(Value::Float(x * y)),
             (Value::Integer(x), Value::Float(y)) => Ok(Value::Float(*x as f64 * y)),
             (Value::Float(x), Value::Integer(y)) => Ok(Value::Float(x * *y as f64)),
+            (Value::BigInteger(x), Value::Float(y)) => {
+                if let Some(int_val) = x.to_i64() {
+                    Ok(Value::Float(int_val as f64 * y))
+                } else {
+                    Err(FlowError::runtime_error("BigInteger too large for float conversion"))
+                }
+            }
+            (Value::Float(x), Value::BigInteger(y)) => {
+                if let Some(int_val) = y.to_i64() {
+                    Ok(Value::Float(x * int_val as f64))
+                } else {
+                    Err(FlowError::runtime_error("BigInteger too large for float conversion"))
+                }
+            }
             _ => Err(FlowError::type_error(format!(
                 "Cannot multiply {} and {}",
                 a.type_name(),
@@ -1449,6 +1535,7 @@ impl BytecodeCompiler {
         let value = match literal {
             Literal::String(s) => Value::String(s.clone()),
             Literal::Integer(i) => Value::Integer(*i),
+            Literal::BigInteger(bi) => Value::BigInteger(bi.clone()),
             Literal::Float(f) => Value::Float(*f),
             Literal::Boolean(b) => Value::Boolean(*b),
             Literal::Null => Value::Null,
@@ -1548,6 +1635,7 @@ impl VirtualMachine {
         }
         let type_name = match &args[0] {
             Value::Integer(_) => "integer",
+            Value::BigInteger(_) => "biginteger",
             Value::Float(_) => "float",
             Value::String(_) => "string",
             Value::Boolean(_) => "boolean",

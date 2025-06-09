@@ -1,0 +1,28 @@
+# BigInt arithmetic test
+show "Testing BigInt arithmetic..."
+
+# Test large numbers
+let big1 be 999999999999999999999999999999
+let big2 be 888888888888888888888888888888
+
+show "First big number:"
+show big1
+show "Second big number:"
+show big2
+
+# Test addition
+let sum be big1 + big2
+show "Addition result:"
+show sum
+
+# Test subtraction
+let diff be big1 - big2
+show "Subtraction result:"
+show diff
+
+# Test multiplication
+let product be big1 * 2
+show "Multiplication by 2:"
+show product
+
+show "BigInt arithmetic test completed!"
