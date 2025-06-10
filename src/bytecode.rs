@@ -4,6 +4,7 @@
 //! FlowLang bytecode instructions.
 
 use crate::ast::{Statement, Expression, BinaryOperator, UnaryOperator, Literal, Program, Parameter};
+
 use crate::error::{FlowError, Result};
 use crate::value::{Value, FlowArray, FlowObject};
 use std::collections::{HashMap, HashSet};
@@ -877,6 +878,79 @@ impl VirtualMachine {
                         parameters: Vec::new(),
                         body: Vec::new(),
                     });
+                }
+                
+                Instruction::Call(argc) => {
+                    // Pop function from stack
+                    let function = self.stack.pop().ok_or_else(|| {
+                        FlowError::runtime_error("Stack underflow: no function to call")
+                    })?;
+                    
+                    // Pop arguments from stack (in reverse order)
+                    let mut args = Vec::new();
+                    for _ in 0..argc {
+                        args.push(self.stack.pop().ok_or_else(|| {
+                            FlowError::runtime_error("Stack underflow: not enough arguments")
+                        })?);
+                    }
+                    args.reverse(); // Arguments were pushed in reverse order
+                    
+                    match function {
+                        Value::Function { name: _, parameters, body } => {
+                            // Create new call frame
+                            let mut locals = vec![Value::Null; parameters.len()];
+                            
+                            // Bind arguments to parameters
+                            for (i, arg) in args.into_iter().enumerate() {
+                                if i < locals.len() {
+                                    locals[i] = arg;
+                                }
+                            }
+                            
+                            let frame = Frame {
+                                function: None,
+                                locals,
+                                instruction_pointer: self.instruction_pointer,
+                                stack_base: self.stack.len(),
+                            };
+                            
+                            self.call_stack.push(frame);
+                            
+                            // For now, we'll execute the function body using the interpreter
+                            // This is a simplified implementation
+                            let mut interpreter = crate::interpreter::Interpreter::new();
+                            
+                            // Set up local variables in interpreter
+                            for (i, param) in parameters.iter().enumerate() {
+                                if i < self.call_stack.last().unwrap().locals.len() {
+                                    interpreter.set_variable(param.name.clone(), self.call_stack.last().unwrap().locals[i].clone());
+                                }
+                            }
+                            
+                            // Execute function body
+                            let mut result = Value::Null;
+                            for stmt in &body {
+                                match stmt {
+                                    crate::ast::Statement::Return(Some(expr)) => {
+                                        result = interpreter.evaluate_expression(expr)?;
+                                        break;
+                                    }
+                                    _ => {
+                                        interpreter.execute_statement(stmt)?;
+                                    }
+                                }
+                            }
+                            
+                            // Pop call frame
+                            self.call_stack.pop();
+                            
+                            // Push result onto stack
+                            self.stack.push(result);
+                        }
+                        _ => {
+                            return Err(FlowError::runtime_error("Cannot call non-function value"));
+                        }
+                    }
                 }
                 
                 Instruction::CallMethod(_method) => {

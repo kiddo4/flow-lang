@@ -63,6 +63,14 @@ impl Interpreter {
         // For now, we'll keep it simple
     }
     
+    pub fn set_variable(&mut self, name: String, value: Value) {
+        self.environment.define_variable(name, value);
+    }
+    
+    pub fn get_environment_mut(&mut self) -> &mut Environment {
+        &mut self.environment
+    }
+    
     pub fn execute(&mut self, program: &Program) -> Result<()> {
         for statement in &program.statements {
             match self.execute_statement(statement) {
@@ -76,7 +84,7 @@ impl Interpreter {
         Ok(())
     }
     
-    fn execute_statement(&mut self, statement: &Statement) -> Result<()> {
+    pub fn execute_statement(&mut self, statement: &Statement) -> Result<()> {
         match statement {
             Statement::VariableDeclaration { name, value } => {
                 let val = self.evaluate_expression(value)?;
@@ -207,7 +215,7 @@ impl Interpreter {
         }
     }
     
-    fn evaluate_expression(&mut self, expression: &Expression) -> Result<Value> {
+    pub fn evaluate_expression(&mut self, expression: &Expression) -> Result<Value> {
         match expression {
             Expression::Literal(literal) => Ok(self.literal_to_value(literal)),
             
@@ -305,7 +313,17 @@ impl Interpreter {
     fn apply_binary_operator(&self, left: &Value, operator: &BinaryOperator, right: &Value) -> Result<Value> {
         match operator {
             BinaryOperator::Add => match (left, right) {
-                (Value::Integer(a), Value::Integer(b)) => Ok(Value::Integer(a + b)),
+                (Value::Integer(a), Value::Integer(b)) => {
+                    match a.checked_add(*b) {
+                        Some(result) => Ok(Value::Integer(result)),
+                        None => {
+                            // Overflow detected, use BigInt
+                            let big_a = crate::bigint::BigInt::from_i64(*a);
+                            let big_b = crate::bigint::BigInt::from_i64(*b);
+                            Ok(Value::BigInteger(big_a + big_b))
+                        }
+                    }
+                },
                 (Value::Float(a), Value::Float(b)) => Ok(Value::Float(a + b)),
                 (Value::Integer(a), Value::Float(b)) => Ok(Value::Float(*a as f64 + b)),
                 (Value::Float(a), Value::Integer(b)) => Ok(Value::Float(a + *b as f64)),
@@ -319,7 +337,17 @@ impl Interpreter {
             },
             
             BinaryOperator::Subtract => match (left, right) {
-                (Value::Integer(a), Value::Integer(b)) => Ok(Value::Integer(a - b)),
+                (Value::Integer(a), Value::Integer(b)) => {
+                    match a.checked_sub(*b) {
+                        Some(result) => Ok(Value::Integer(result)),
+                        None => {
+                            // Overflow detected, use BigInt
+                            let big_a = crate::bigint::BigInt::from_i64(*a);
+                            let big_b = crate::bigint::BigInt::from_i64(*b);
+                            Ok(Value::BigInteger(big_a - big_b))
+                        }
+                    }
+                },
                 (Value::Float(a), Value::Float(b)) => Ok(Value::Float(a - b)),
                 (Value::Integer(a), Value::Float(b)) => Ok(Value::Float(*a as f64 - b)),
                 (Value::Float(a), Value::Integer(b)) => Ok(Value::Float(a - *b as f64)),

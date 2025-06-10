@@ -40,6 +40,9 @@ pub mod value;
 pub mod bytecode;
 pub mod bigint;
 pub mod optimized_vm;
+pub mod jit;
+pub mod memory;
+pub mod specialized_instructions;
 
 pub use ast::*;
 pub use error::*;

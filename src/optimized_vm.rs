@@ -9,8 +9,12 @@
 use crate::bytecode::{Instruction, VirtualMachine};
 use crate::value::Value;
 use crate::error::{FlowError, Result};
+use crate::jit::{JitCompiler, JitBackend, JitIntegration, JitStats};
+use crate::memory::{AdvancedMemoryManager, MemoryConfig, MemoryManagement, MemoryStats};
+use crate::specialized_instructions::{SpecializedExecutor, SpecializedInstruction, InstructionOptimizer, SpecializedPerformanceAnalyzer};
 // Removed unused HashMap import
-use std::time::Instant;
+use std::time::{Instant, Duration};
+use std::sync::Arc;
 
 /// Optimized instruction variants for better performance
 #[derive(Debug, Clone, PartialEq)]
@@ -98,6 +102,18 @@ pub struct OptimizedVM {
     call_site_caches: Vec<CallSiteCache>,
     execution_stats: ExecutionStats,
     optimization_enabled: bool,
+    
+    // Advanced optimization systems
+    jit_compiler: Option<JitCompiler>,
+    memory_manager: Option<AdvancedMemoryManager>,
+    specialized_executor: SpecializedExecutor,
+    instruction_optimizer: InstructionOptimizer,
+    performance_analyzer: SpecializedPerformanceAnalyzer,
+    
+    // Performance tracking
+    hot_path_detection: bool,
+    adaptive_optimization: bool,
+    tail_call_optimization: bool,
 }
 
 #[derive(Debug, Clone, Default)]
@@ -117,6 +133,14 @@ impl OptimizedVM {
             call_site_caches: Vec::new(),
             execution_stats: ExecutionStats::default(),
             optimization_enabled: true,
+            jit_compiler: None,
+            memory_manager: None,
+            specialized_executor: SpecializedExecutor::new(),
+            instruction_optimizer: InstructionOptimizer::new(),
+            performance_analyzer: SpecializedPerformanceAnalyzer::new(),
+            hot_path_detection: true,
+            adaptive_optimization: true,
+            tail_call_optimization: true,
         }
     }
     
@@ -127,6 +151,14 @@ impl OptimizedVM {
             call_site_caches: Vec::new(),
             execution_stats: ExecutionStats::default(),
             optimization_enabled: true,
+            jit_compiler: None,
+            memory_manager: None,
+            specialized_executor: SpecializedExecutor::new(),
+            instruction_optimizer: InstructionOptimizer::new(),
+            performance_analyzer: SpecializedPerformanceAnalyzer::new(),
+            hot_path_detection: true,
+            adaptive_optimization: true,
+            tail_call_optimization: true,
         }
     }
     

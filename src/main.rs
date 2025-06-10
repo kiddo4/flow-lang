@@ -15,6 +15,9 @@ mod stdlib;
 mod value;
 mod bigint;
 mod optimized_vm;
+mod jit;
+mod memory;
+mod specialized_instructions;
 
 use crate::lexer::Lexer;
 use crate::parser::Parser;
