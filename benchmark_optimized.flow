@@ -1,8 +1,8 @@
-// Comprehensive benchmark for optimized FlowLang VM
-// This tests various performance aspects
+# Comprehensive benchmark for optimized FlowLang VM
+# This tests various performance aspects
 
-// Test 1: Arithmetic intensive operations
-def fibonacci_recursive(n) with
+# Test 1: Arithmetic intensive operations
+def fibonacci_recursive with n do
     if n <= 1 then
         return n
     else
@@ -10,7 +10,7 @@ def fibonacci_recursive(n) with
     end
 end
 
-def fibonacci_iterative(n) with
+def fibonacci_iterative with n do
     let a be 0
     let b be 1
     let i be 0
@@ -25,8 +25,8 @@ def fibonacci_iterative(n) with
     return a
 end
 
-// Test 2: Large number arithmetic (tests BigInt)
-def large_factorial(n) with
+# Test 2: Large number arithmetic (tests BigInt)
+def large_factorial with n do
     let result be 1
     let i be 1
     
@@ -38,8 +38,8 @@ def large_factorial(n) with
     return result
 end
 
-// Test 3: String operations
-def string_concat_test(count) with
+# Test 3: String operations
+def string_concat_test with count do
     let result be ""
     let i be 0
     
@@ -51,12 +51,12 @@ def string_concat_test(count) with
     return result
 end
 
-// Test 4: Function call overhead
-def simple_add(a, b) with
+# Test 4: Function call overhead
+def simple_add with a, b do
     return a + b
 end
 
-def call_overhead_test(iterations) with
+def call_overhead_test with iterations do
     let sum be 0
     let i be 0
     
@@ -68,8 +68,8 @@ def call_overhead_test(iterations) with
     return sum
 end
 
-// Test 5: Control flow intensive
-def prime_check(n) with
+# Test 5: Control flow intensive
+def prime_check with n do
     if n <= 1 then
         return false
     end
@@ -93,7 +93,7 @@ def prime_check(n) with
     return true
 end
 
-def count_primes(limit) with
+def count_primes with limit do
     let count be 0
     let i be 2
     
@@ -107,10 +107,10 @@ def count_primes(limit) with
     return count
 end
 
-// Run benchmarks
+# Run benchmarks
 show "=== FlowLang Optimized VM Benchmark ==="
 
-// Fibonacci tests
+# Fibonacci tests
 show "Testing Fibonacci (recursive)..."
 let fib_result be fibonacci_recursive(35)
 show "Fibonacci(35) = " + fib_result
@@ -119,22 +119,22 @@ show "Testing Fibonacci (iterative)..."
 let fib_iter_result be fibonacci_iterative(1000)
 show "Fibonacci(1000) iterative = " + fib_iter_result
 
-// Large number test
+# Large number test
 show "Testing large factorial..."
 let factorial_result be large_factorial(100)
 show "100! = " + factorial_result
 
-// String operations
+# String operations
 show "Testing string concatenation..."
 let string_result be string_concat_test(1000)
-show "String concat result length: " + string_result
+show "String concat test completed"
 
-// Function call overhead
+# Function call overhead
 show "Testing function call overhead..."
 let call_result be call_overhead_test(10000)
 show "Call overhead test result: " + call_result
 
-// Prime counting
+# Prime counting
 show "Testing prime counting..."
 let prime_count be count_primes(1000)
 show "Primes under 1000: " + prime_count
