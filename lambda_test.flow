@@ -1,0 +1,14 @@
+// Test lambda expressions
+let square be (x) => x * x
+let result be square(5)
+print(result)
+
+// Test lambda with multiple parameters
+let add be (a, b) => a + b
+let sum be add(3, 7)
+print(sum)
+
+// Test lambda in variable assignment
+let multiply be (x, y) => x * y
+let product be multiply(4, 6)
+print(product)

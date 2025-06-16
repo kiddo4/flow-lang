@@ -1,0 +1,149 @@
+# Phase 1 Feature Test - Core Language Extensions
+
+# 1.1 Data Structures - Arrays and Hash Maps
+show "=== Testing Arrays ==="
+let arr be [1, 2, 3, 4, 5]
+show "Array:"
+show arr
+show "Array length:"
+show arr.length
+
+# Array indexing
+show "First element:"
+show arr[0]
+show "Last element:"
+show arr[4]
+
+# Array methods
+show "Testing push:"
+arr.push(6)
+show arr
+
+show "Testing pop:"
+let popped be arr.pop()
+show "Popped value:"
+show popped
+show "Array after pop:"
+show arr
+
+# Hash Maps/Objects
+show "\n=== Testing Hash Maps ==="
+let map be {"name": "Alice", "age": 30, "city": "New York"}
+show "Map:"
+show map
+show "Map keys:"
+show map.keys()
+
+# Object property access
+show "Name:"
+show map["name"]
+show "Age:"
+show map.age
+
+# Object methods
+show "Has 'name' key:"
+show map.has("name")
+show "Has 'country' key:"
+show map.has("country")
+
+# 1.2 Enhanced Functions - Default Parameters
+show "\n=== Testing Default Parameters ==="
+def greet with name = "World", prefix = "Hello" do
+    show prefix + ", " + name + "!"
+end
+
+show "Calling greet():"
+greet()
+show "Calling greet('Alice'):"
+greet("Alice")
+show "Calling greet('Bob', 'Hi'):"
+greet("Bob", "Hi")
+
+# Variable Arguments (basic test)
+show "\n=== Testing Variable Arguments ==="
+def sum_first_two with ...numbers do
+    # Basic variadic test - sum first two arguments
+    return numbers[0] + numbers[1]
+end
+
+def count_args with first, ...rest do
+    show "First argument: " + first
+    show "Number of additional arguments: " + rest.length
+    return rest.length
+end
+
+show "Sum first two from (10, 20, 30):"
+show sum_first_two(10, 20, 30)
+
+show "Count args test:"
+let arg_count be count_args("hello", "world", "test", "more")
+show "Returned count: " + arg_count
+
+# Anonymous Functions/Lambdas
+show "\n=== Testing Lambda Functions ==="
+let square be (x) => x * x
+show "Lambda square of 4:"
+show square(4)
+
+let add be (a, b) => a + b
+show "Lambda add 5 + 3:"
+show add(5, 3)
+
+let multiply be (x, y = 2) => x * y
+show "Lambda with default parameter:"
+show multiply(5)
+show multiply(5, 3)
+
+# 1.3 Module System (basic test)
+show "\n=== Testing Module System ==="
+# Note: These are basic syntax tests
+# import math from "std/math"
+# export def helper with x do
+#     return x * 2
+# end
+
+# 1.4 Error Handling - Try-Catch
+show "\n=== Testing Try-Catch ==="
+try
+    let result be 10 / 0
+    show "This should not print"
+catch error
+    show "Caught error: Division by zero"
+end
+
+try
+    show "This should work fine"
+    let safe_result be 10 / 2
+    show "Safe division result: " + safe_result
+catch error
+    show "This should not execute"
+end
+
+# Nested collections test
+show "\n=== Testing Nested Collections ==="
+let nested be {
+    "users": [
+        {"name": "Alice", "scores": [95, 87, 92]},
+        {"name": "Bob", "scores": [88, 91, 85]}
+    ],
+    "total_users": 2
+}
+
+show "Nested data:"
+show nested
+show "First user name:"
+show nested.users[0].name
+show "First user's first score:"
+show nested.users[0].scores[0]
+
+# Array slice method test
+show "\n=== Testing Array Slice ==="
+let numbers be [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
+show "Original array:"
+show numbers
+show "Slice [2:5]:"
+show numbers.slice(2, 5)
+show "Slice [0:3]:"
+show numbers.slice(0, 3)
+
+show "\n=== Phase 1 Tests Complete ==="

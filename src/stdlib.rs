@@ -1,7 +1,18 @@
-//! Standard Library for FlowLang
+//! FlowLang Standard Library
 //! 
 //! This module provides built-in functions and utilities that are
 //! available to all FlowLang programs.
+//!
+//! The standard library is organized into modules:
+//! - Core functions (print, input, etc.)
+//! - String manipulation
+//! - Array operations
+//! - Object operations
+//! - Math functions
+//! - I/O operations
+//! - Time functions
+//! - Type conversion
+//! - Extended modules (io, system, net, json, crypto)
 
 use crate::error::{FlowError, Result};
 use crate::value::{FlowArray, FlowObject, Value};
@@ -9,15 +20,20 @@ use std::collections::HashMap;
 use std::time::{SystemTime, UNIX_EPOCH};
 use std::io::{self, Write};
 
+// Import the new modular standard library
+use crate::stdlib_modules::StandardLibraryRegistry;
+
 /// Standard library functions registry
 pub struct StandardLibrary {
-    functions: HashMap<String, fn(&[Value]) -> Result<Value>>,
+    pub functions: HashMap<String, fn(Vec<Value>) -> Result<Value>>,
+    extended_registry: StandardLibraryRegistry,
 }
 
 impl StandardLibrary {
     pub fn new() -> Self {
         let mut stdlib = Self {
             functions: HashMap::new(),
+            extended_registry: StandardLibraryRegistry::new(),
         };
         
         // Register all standard library functions
@@ -33,16 +49,42 @@ impl StandardLibrary {
         stdlib
     }
     
-    pub fn get_function(&self, name: &str) -> Option<&fn(&[Value]) -> Result<Value>> {
+    pub fn get_function(&self, name: &str) -> Option<&fn(Vec<Value>) -> Result<Value>> {
         self.functions.get(name)
     }
     
     pub fn has_function(&self, name: &str) -> bool {
-        self.functions.contains_key(name)
+        self.functions.contains_key(name) || self.extended_registry.has_function(name)
     }
     
     pub fn list_functions(&self) -> Vec<&String> {
         self.functions.keys().collect()
+    }
+    
+    /// Call a function from either the legacy or extended registry
+    pub fn call_function(&self, name: &str, args: &[Value]) -> Result<Value> {
+        // First try legacy functions
+        if let Some(func) = self.functions.get(name) {
+            return func(args.to_vec());
+        }
+        
+        // Then try extended registry with converted arguments
+        if self.extended_registry.has_function(name) {
+            let converted_args: Vec<crate::value::Value> = args.iter().cloned().collect();
+            return self.extended_registry.call_function(name, converted_args)
+                .map_err(|e| FlowError::runtime_error(&e.to_string()));
+        }
+        
+        Err(FlowError::runtime_error(&format!("Unknown function: {}", name)))
+    }
+    
+    /// Get all function names from both registries
+    pub fn get_all_function_names(&self) -> Vec<String> {
+        let mut names: Vec<String> = self.functions.keys().cloned().collect();
+        names.extend(self.extended_registry.get_function_names());
+        names.sort();
+        names.dedup();
+        names
     }
     
     fn register_core_functions(&mut self) {
@@ -116,6 +158,7 @@ impl StandardLibrary {
     fn register_type_functions(&mut self) {
         self.functions.insert("type_of".to_string(), stdlib_type_of);
         self.functions.insert("to_string".to_string(), stdlib_to_string);
+        self.functions.insert("str".to_string(), stdlib_to_string); // Alias for to_string
         self.functions.insert("to_int".to_string(), stdlib_to_int);
         self.functions.insert("to_float".to_string(), stdlib_to_float);
         self.functions.insert("to_bool".to_string(), stdlib_to_bool);
@@ -123,7 +166,7 @@ impl StandardLibrary {
 }
 
 // Core functions
-fn stdlib_print(args: &[Value]) -> Result<Value> {
+fn stdlib_print(args: Vec<Value>) -> Result<Value> {
     for (i, arg) in args.iter().enumerate() {
         if i > 0 {
             print!(" ");
@@ -134,13 +177,13 @@ fn stdlib_print(args: &[Value]) -> Result<Value> {
     Ok(Value::Null)
 }
 
-fn stdlib_println(args: &[Value]) -> Result<Value> {
+fn stdlib_println(args: Vec<Value>) -> Result<Value> {
     stdlib_print(args)?;
     println!();
     Ok(Value::Null)
 }
 
-fn stdlib_input(args: &[Value]) -> Result<Value> {
+fn stdlib_input(args: Vec<Value>) -> Result<Value> {
     if !args.is_empty() {
         print!("{}", args[0]);
         io::stdout().flush().map_err(|e| FlowError::runtime_error(&format!("IO error: {}", e)))?;
@@ -161,7 +204,7 @@ fn stdlib_input(args: &[Value]) -> Result<Value> {
     Ok(Value::String(input))
 }
 
-fn stdlib_assert(args: &[Value]) -> Result<Value> {
+fn stdlib_assert(args: Vec<Value>) -> Result<Value> {
     if args.is_empty() {
         return Err(FlowError::runtime_error("assert requires at least one argument"));
     }
@@ -179,7 +222,7 @@ fn stdlib_assert(args: &[Value]) -> Result<Value> {
     Ok(Value::Null)
 }
 
-fn stdlib_panic(args: &[Value]) -> Result<Value> {
+fn stdlib_panic(args: Vec<Value>) -> Result<Value> {
     let message = if args.is_empty() {
         "panic called".to_string()
     } else {
@@ -189,7 +232,7 @@ fn stdlib_panic(args: &[Value]) -> Result<Value> {
 }
 
 // String functions
-fn stdlib_str_len(args: &[Value]) -> Result<Value> {
+fn stdlib_str_len(args: Vec<Value>) -> Result<Value> {
     if args.len() != 1 {
         return Err(FlowError::runtime_error("str_len requires exactly one argument"));
     }
@@ -200,7 +243,7 @@ fn stdlib_str_len(args: &[Value]) -> Result<Value> {
     }
 }
 
-fn stdlib_str_upper(args: &[Value]) -> Result<Value> {
+fn stdlib_str_upper(args: Vec<Value>) -> Result<Value> {
     if args.len() != 1 {
         return Err(FlowError::runtime_error("str_upper requires exactly one argument"));
     }
@@ -211,7 +254,7 @@ fn stdlib_str_upper(args: &[Value]) -> Result<Value> {
     }
 }
 
-fn stdlib_str_lower(args: &[Value]) -> Result<Value> {
+fn stdlib_str_lower(args: Vec<Value>) -> Result<Value> {
     if args.len() != 1 {
         return Err(FlowError::runtime_error("str_lower requires exactly one argument"));
     }
@@ -222,7 +265,7 @@ fn stdlib_str_lower(args: &[Value]) -> Result<Value> {
     }
 }
 
-fn stdlib_str_trim(args: &[Value]) -> Result<Value> {
+fn stdlib_str_trim(args: Vec<Value>) -> Result<Value> {
     if args.len() != 1 {
         return Err(FlowError::runtime_error("str_trim requires exactly one argument"));
     }
@@ -233,7 +276,7 @@ fn stdlib_str_trim(args: &[Value]) -> Result<Value> {
     }
 }
 
-fn stdlib_str_split(args: &[Value]) -> Result<Value> {
+fn stdlib_str_split(args: Vec<Value>) -> Result<Value> {
     if args.len() != 2 {
         return Err(FlowError::runtime_error("str_split requires exactly two arguments"));
     }
@@ -255,7 +298,7 @@ fn stdlib_str_split(args: &[Value]) -> Result<Value> {
     }
 }
 
-fn stdlib_str_join(args: &[Value]) -> Result<Value> {
+fn stdlib_str_join(args: Vec<Value>) -> Result<Value> {
     if args.len() != 2 {
         return Err(FlowError::runtime_error("str_join requires exactly two arguments"));
     }
@@ -278,7 +321,7 @@ fn stdlib_str_join(args: &[Value]) -> Result<Value> {
     }
 }
 
-fn stdlib_str_contains(args: &[Value]) -> Result<Value> {
+fn stdlib_str_contains(args: Vec<Value>) -> Result<Value> {
     if args.len() != 2 {
         return Err(FlowError::runtime_error("str_contains requires exactly two arguments"));
     }
@@ -291,7 +334,7 @@ fn stdlib_str_contains(args: &[Value]) -> Result<Value> {
     }
 }
 
-fn stdlib_str_starts_with(args: &[Value]) -> Result<Value> {
+fn stdlib_str_starts_with(args: Vec<Value>) -> Result<Value> {
     if args.len() != 2 {
         return Err(FlowError::runtime_error("str_starts_with requires exactly two arguments"));
     }
@@ -304,7 +347,7 @@ fn stdlib_str_starts_with(args: &[Value]) -> Result<Value> {
     }
 }
 
-fn stdlib_str_ends_with(args: &[Value]) -> Result<Value> {
+fn stdlib_str_ends_with(args: Vec<Value>) -> Result<Value> {
     if args.len() != 2 {
         return Err(FlowError::runtime_error("str_ends_with requires exactly two arguments"));
     }
@@ -317,7 +360,7 @@ fn stdlib_str_ends_with(args: &[Value]) -> Result<Value> {
     }
 }
 
-fn stdlib_str_replace(args: &[Value]) -> Result<Value> {
+fn stdlib_str_replace(args: Vec<Value>) -> Result<Value> {
     if args.len() != 3 {
         return Err(FlowError::runtime_error("str_replace requires exactly three arguments"));
     }
@@ -330,7 +373,7 @@ fn stdlib_str_replace(args: &[Value]) -> Result<Value> {
     }
 }
 
-fn stdlib_str_substring(args: &[Value]) -> Result<Value> {
+fn stdlib_str_substring(args: Vec<Value>) -> Result<Value> {
     if args.len() < 2 || args.len() > 3 {
         return Err(FlowError::runtime_error("str_substring requires 2 or 3 arguments"));
     }
@@ -362,7 +405,7 @@ fn stdlib_str_substring(args: &[Value]) -> Result<Value> {
 }
 
 // Array functions
-fn stdlib_array_len(args: &[Value]) -> Result<Value> {
+fn stdlib_array_len(args: Vec<Value>) -> Result<Value> {
     if args.len() != 1 {
         return Err(FlowError::runtime_error("array_len requires exactly one argument"));
     }
@@ -373,7 +416,7 @@ fn stdlib_array_len(args: &[Value]) -> Result<Value> {
     }
 }
 
-fn stdlib_array_push(args: &[Value]) -> Result<Value> {
+fn stdlib_array_push(args: Vec<Value>) -> Result<Value> {
     if args.len() != 2 {
         return Err(FlowError::runtime_error("array_push requires exactly two arguments"));
     }
@@ -388,7 +431,7 @@ fn stdlib_array_push(args: &[Value]) -> Result<Value> {
     }
 }
 
-fn stdlib_array_pop(args: &[Value]) -> Result<Value> {
+fn stdlib_array_pop(args: Vec<Value>) -> Result<Value> {
     if args.len() != 1 {
         return Err(FlowError::runtime_error("array_pop requires exactly one argument"));
     }
@@ -405,7 +448,7 @@ fn stdlib_array_pop(args: &[Value]) -> Result<Value> {
     }
 }
 
-fn stdlib_array_slice(args: &[Value]) -> Result<Value> {
+fn stdlib_array_slice(args: Vec<Value>) -> Result<Value> {
     if args.len() < 2 || args.len() > 3 {
         return Err(FlowError::runtime_error("array_slice requires 2 or 3 arguments"));
     }
@@ -436,40 +479,40 @@ fn stdlib_array_slice(args: &[Value]) -> Result<Value> {
 }
 
 // Placeholder implementations for remaining functions
-fn stdlib_array_concat(_args: &[Value]) -> Result<Value> {
+fn stdlib_array_concat(_args: Vec<Value>) -> Result<Value> {
     Err(FlowError::runtime_error("array_concat not yet implemented"))
 }
 
-fn stdlib_array_reverse(_args: &[Value]) -> Result<Value> {
+fn stdlib_array_reverse(_args: Vec<Value>) -> Result<Value> {
     Err(FlowError::runtime_error("array_reverse not yet implemented"))
 }
 
-fn stdlib_array_sort(_args: &[Value]) -> Result<Value> {
+fn stdlib_array_sort(_args: Vec<Value>) -> Result<Value> {
     Err(FlowError::runtime_error("array_sort not yet implemented"))
 }
 
-fn stdlib_array_map(_args: &[Value]) -> Result<Value> {
+fn stdlib_array_map(_args: Vec<Value>) -> Result<Value> {
     Err(FlowError::runtime_error("array_map not yet implemented"))
 }
 
-fn stdlib_array_filter(_args: &[Value]) -> Result<Value> {
+fn stdlib_array_filter(_args: Vec<Value>) -> Result<Value> {
     Err(FlowError::runtime_error("array_filter not yet implemented"))
 }
 
-fn stdlib_array_reduce(_args: &[Value]) -> Result<Value> {
+fn stdlib_array_reduce(_args: Vec<Value>) -> Result<Value> {
     Err(FlowError::runtime_error("array_reduce not yet implemented"))
 }
 
-fn stdlib_array_find(_args: &[Value]) -> Result<Value> {
+fn stdlib_array_find(_args: Vec<Value>) -> Result<Value> {
     Err(FlowError::runtime_error("array_find not yet implemented"))
 }
 
-fn stdlib_array_contains(_args: &[Value]) -> Result<Value> {
+fn stdlib_array_contains(_args: Vec<Value>) -> Result<Value> {
     Err(FlowError::runtime_error("array_contains not yet implemented"))
 }
 
 // Object functions
-fn stdlib_object_keys(args: &[Value]) -> Result<Value> {
+fn stdlib_object_keys(args: Vec<Value>) -> Result<Value> {
     if args.len() != 1 {
         return Err(FlowError::runtime_error("object_keys requires exactly one argument"));
     }
@@ -486,7 +529,7 @@ fn stdlib_object_keys(args: &[Value]) -> Result<Value> {
     }
 }
 
-fn stdlib_object_values(args: &[Value]) -> Result<Value> {
+fn stdlib_object_values(args: Vec<Value>) -> Result<Value> {
     if args.len() != 1 {
         return Err(FlowError::runtime_error("object_values requires exactly one argument"));
     }
@@ -503,20 +546,20 @@ fn stdlib_object_values(args: &[Value]) -> Result<Value> {
     }
 }
 
-fn stdlib_object_entries(_args: &[Value]) -> Result<Value> {
+fn stdlib_object_entries(_args: Vec<Value>) -> Result<Value> {
     Err(FlowError::runtime_error("object_entries not yet implemented"))
 }
 
-fn stdlib_object_has_key(_args: &[Value]) -> Result<Value> {
+fn stdlib_object_has_key(_args: Vec<Value>) -> Result<Value> {
     Err(FlowError::runtime_error("object_has_key not yet implemented"))
 }
 
-fn stdlib_object_merge(_args: &[Value]) -> Result<Value> {
+fn stdlib_object_merge(_args: Vec<Value>) -> Result<Value> {
     Err(FlowError::runtime_error("object_merge not yet implemented"))
 }
 
 // Math functions
-fn stdlib_abs(args: &[Value]) -> Result<Value> {
+fn stdlib_abs(args: Vec<Value>) -> Result<Value> {
     if args.len() != 1 {
         return Err(FlowError::runtime_error("abs requires exactly one argument"));
     }
@@ -528,7 +571,7 @@ fn stdlib_abs(args: &[Value]) -> Result<Value> {
     }
 }
 
-fn stdlib_min(args: &[Value]) -> Result<Value> {
+fn stdlib_min(args: Vec<Value>) -> Result<Value> {
     if args.is_empty() {
         return Err(FlowError::runtime_error("min requires at least one argument"));
     }
@@ -563,7 +606,7 @@ fn stdlib_min(args: &[Value]) -> Result<Value> {
     Ok(min_val.clone())
 }
 
-fn stdlib_max(args: &[Value]) -> Result<Value> {
+fn stdlib_max(args: Vec<Value>) -> Result<Value> {
     if args.is_empty() {
         return Err(FlowError::runtime_error("max requires at least one argument"));
     }
@@ -598,7 +641,7 @@ fn stdlib_max(args: &[Value]) -> Result<Value> {
     Ok(max_val.clone())
 }
 
-fn stdlib_floor(args: &[Value]) -> Result<Value> {
+fn stdlib_floor(args: Vec<Value>) -> Result<Value> {
     if args.len() != 1 {
         return Err(FlowError::runtime_error("floor requires exactly one argument"));
     }
@@ -610,7 +653,7 @@ fn stdlib_floor(args: &[Value]) -> Result<Value> {
     }
 }
 
-fn stdlib_ceil(args: &[Value]) -> Result<Value> {
+fn stdlib_ceil(args: Vec<Value>) -> Result<Value> {
     if args.len() != 1 {
         return Err(FlowError::runtime_error("ceil requires exactly one argument"));
     }
@@ -622,7 +665,7 @@ fn stdlib_ceil(args: &[Value]) -> Result<Value> {
     }
 }
 
-fn stdlib_round(args: &[Value]) -> Result<Value> {
+fn stdlib_round(args: Vec<Value>) -> Result<Value> {
     if args.len() != 1 {
         return Err(FlowError::runtime_error("round requires exactly one argument"));
     }
@@ -634,7 +677,7 @@ fn stdlib_round(args: &[Value]) -> Result<Value> {
     }
 }
 
-fn stdlib_sqrt(args: &[Value]) -> Result<Value> {
+fn stdlib_sqrt(args: Vec<Value>) -> Result<Value> {
     if args.len() != 1 {
         return Err(FlowError::runtime_error("sqrt requires exactly one argument"));
     }
@@ -658,7 +701,7 @@ fn stdlib_sqrt(args: &[Value]) -> Result<Value> {
     }
 }
 
-fn stdlib_pow(args: &[Value]) -> Result<Value> {
+fn stdlib_pow(args: Vec<Value>) -> Result<Value> {
     if args.len() != 2 {
         return Err(FlowError::runtime_error("pow requires exactly two arguments"));
     }
@@ -684,7 +727,7 @@ fn stdlib_pow(args: &[Value]) -> Result<Value> {
     }
 }
 
-fn stdlib_random(_args: &[Value]) -> Result<Value> {
+fn stdlib_random(_args: Vec<Value>) -> Result<Value> {
     use std::collections::hash_map::DefaultHasher;
     use std::hash::{Hash, Hasher};
     
@@ -702,7 +745,7 @@ fn stdlib_random(_args: &[Value]) -> Result<Value> {
 }
 
 // IO functions
-fn stdlib_read_file(args: &[Value]) -> Result<Value> {
+fn stdlib_read_file(args: Vec<Value>) -> Result<Value> {
     if args.len() != 1 {
         return Err(FlowError::runtime_error("read_file requires exactly one argument"));
     }
@@ -718,7 +761,7 @@ fn stdlib_read_file(args: &[Value]) -> Result<Value> {
     }
 }
 
-fn stdlib_write_file(args: &[Value]) -> Result<Value> {
+fn stdlib_write_file(args: Vec<Value>) -> Result<Value> {
     if args.len() != 2 {
         return Err(FlowError::runtime_error("write_file requires exactly two arguments"));
     }
@@ -734,7 +777,7 @@ fn stdlib_write_file(args: &[Value]) -> Result<Value> {
     }
 }
 
-fn stdlib_file_exists(args: &[Value]) -> Result<Value> {
+fn stdlib_file_exists(args: Vec<Value>) -> Result<Value> {
     if args.len() != 1 {
         return Err(FlowError::runtime_error("file_exists requires exactly one argument"));
     }
@@ -748,7 +791,7 @@ fn stdlib_file_exists(args: &[Value]) -> Result<Value> {
 }
 
 // Time functions
-fn stdlib_now(_args: &[Value]) -> Result<Value> {
+fn stdlib_now(_args: Vec<Value>) -> Result<Value> {
     let timestamp = SystemTime::now()
         .duration_since(UNIX_EPOCH)
         .unwrap_or_default()
@@ -757,7 +800,7 @@ fn stdlib_now(_args: &[Value]) -> Result<Value> {
     Ok(Value::Integer(timestamp as i64))
 }
 
-fn stdlib_sleep(args: &[Value]) -> Result<Value> {
+fn stdlib_sleep(args: Vec<Value>) -> Result<Value> {
     if args.len() != 1 {
         return Err(FlowError::runtime_error("sleep requires exactly one argument"));
     }
@@ -776,7 +819,7 @@ fn stdlib_sleep(args: &[Value]) -> Result<Value> {
 }
 
 // Type functions
-fn stdlib_type_of(args: &[Value]) -> Result<Value> {
+fn stdlib_type_of(args: Vec<Value>) -> Result<Value> {
     if args.len() != 1 {
         return Err(FlowError::runtime_error("type_of requires exactly one argument"));
     }
@@ -785,7 +828,7 @@ fn stdlib_type_of(args: &[Value]) -> Result<Value> {
     Ok(Value::String(type_name.to_string()))
 }
 
-fn stdlib_to_string(args: &[Value]) -> Result<Value> {
+fn stdlib_to_string(args: Vec<Value>) -> Result<Value> {
     if args.len() != 1 {
         return Err(FlowError::runtime_error("to_string requires exactly one argument"));
     }
@@ -793,7 +836,7 @@ fn stdlib_to_string(args: &[Value]) -> Result<Value> {
     Ok(Value::String(format!("{}", args[0])))
 }
 
-fn stdlib_to_int(args: &[Value]) -> Result<Value> {
+fn stdlib_to_int(args: Vec<Value>) -> Result<Value> {
     if args.len() != 1 {
         return Err(FlowError::runtime_error("to_int requires exactly one argument"));
     }
@@ -812,7 +855,7 @@ fn stdlib_to_int(args: &[Value]) -> Result<Value> {
     }
 }
 
-fn stdlib_to_float(args: &[Value]) -> Result<Value> {
+fn stdlib_to_float(args: Vec<Value>) -> Result<Value> {
     if args.len() != 1 {
         return Err(FlowError::runtime_error("to_float requires exactly one argument"));
     }
@@ -830,7 +873,7 @@ fn stdlib_to_float(args: &[Value]) -> Result<Value> {
     }
 }
 
-fn stdlib_to_bool(args: &[Value]) -> Result<Value> {
+fn stdlib_to_bool(args: Vec<Value>) -> Result<Value> {
     if args.len() != 1 {
         return Err(FlowError::runtime_error("to_bool requires exactly one argument"));
     }

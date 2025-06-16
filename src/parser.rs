@@ -553,11 +553,13 @@ impl Parser {
             Token::Boolean(b) => Ok(Expression::Literal(Literal::Boolean(*b))),
             Token::Identifier(name) => Ok(Expression::Identifier(name.clone())),
             Token::LeftParen => {
+                // We already advanced past the LeftParen, so we need to step back
+                self.current -= 1;
                 // Check if this is a lambda expression
                 if self.is_lambda_expression() {
                     self.parse_lambda()
                 } else {
-                    self.advance();
+                    self.advance(); // consume the LeftParen again
                     let expr = self.expression()?;
                     self.consume(&Token::RightParen, "Expected ')' after expression")?;
                     Ok(expr)

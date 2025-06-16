@@ -1,0 +1,2 @@
+let http_response be {"status": 200}
+show "HTTP GET response status: " + to_string(http_response.status)

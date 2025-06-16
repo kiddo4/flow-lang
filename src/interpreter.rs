@@ -1,6 +1,7 @@
 use crate::ast::*;
 use crate::error::{FlowError, Result};
 use crate::value::{Value, FlowArray, FlowObject, Environment};
+use crate::stdlib::StandardLibrary;
 use std::collections::HashMap;
 
 impl Value {
@@ -44,6 +45,7 @@ impl Value {
 pub struct Interpreter {
     environment: Environment,
     return_value: Option<Value>,
+    stdlib: StandardLibrary,
 }
 
 impl Interpreter {
@@ -51,6 +53,7 @@ impl Interpreter {
         let mut interpreter = Self {
             environment: Environment::new(),
             return_value: None,
+            stdlib: StandardLibrary::new(),
         };
         
         // Add built-in functions
@@ -59,8 +62,8 @@ impl Interpreter {
     }
     
     fn add_builtins(&mut self) {
-        // Built-in math functions can be added here
-        // For now, we'll keep it simple
+        // Standard library functions are now handled directly in call_function
+        // No need to pre-register them in the environment
     }
     
     pub fn set_variable(&mut self, name: String, value: Value) {
@@ -501,9 +504,24 @@ impl Interpreter {
     }
     
     fn call_function(&mut self, name: &str, arguments: &[Expression]) -> Result<Value> {
-        let function = self.environment.get_function(name)
-            .cloned()
-            .ok_or_else(|| FlowError::undefined_function(name))?;
+        // First check if it's a stdlib function (both legacy and extended)
+        if self.stdlib.has_function(name) {
+            // Evaluate arguments for stdlib function
+            let mut args = Vec::new();
+            for arg in arguments {
+                args.push(self.evaluate_expression(arg)?);
+            }
+            return self.stdlib.call_function(name, &args);
+        }
+        
+        // Then check functions, then check variables for lambda values
+        let function = if let Some(func) = self.environment.get_function(name) {
+            func.clone()
+        } else if let Some(var) = self.environment.get_variable(name) {
+            var.clone()
+        } else {
+            return Err(FlowError::undefined_function(name));
+        };
         
         match function {
             Value::Function { parameters, body, .. } => {
@@ -602,6 +620,22 @@ impl Interpreter {
                             return Err(FlowError::runtime_error("length() expects no arguments".to_string()));
                         }
                         Ok(Value::Integer(arr.len() as i64))
+                    }
+                    "slice" => {
+                        if arguments.len() != 2 {
+                            return Err(FlowError::runtime_error("slice() expects exactly 2 arguments (start, end)".to_string()));
+                        }
+                        let start_val = self.evaluate_expression(&arguments[0])?;
+                        let end_val = self.evaluate_expression(&arguments[1])?;
+                        
+                        if let (Value::Integer(start), Value::Integer(end)) = (start_val, end_val) {
+                            match arr.slice(start as usize, end as usize) {
+                                Ok(sliced_arr) => Ok(Value::Array(sliced_arr)),
+                                Err(err) => Err(FlowError::runtime_error(err))
+                            }
+                        } else {
+                            Err(FlowError::type_error("slice() arguments must be integers".to_string()))
+                        }
                     }
                     _ => Err(FlowError::runtime_error(format!("Array has no method '{}'", method)))
                 }

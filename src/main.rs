@@ -3,29 +3,13 @@ use colored::*;
 use std::fs;
 use std::path::Path;
 
-mod ast;
-mod lexer;
-mod parser;
-mod interpreter;
-mod error;
-mod collections;
-mod bytecode;
-mod compiler;
-mod stdlib;
-mod value;
-mod bigint;
-mod optimized_vm;
-mod jit;
-mod memory;
-mod specialized_instructions;
-
-use crate::lexer::Lexer;
-use crate::parser::Parser;
-use crate::interpreter::Interpreter;
-use crate::bytecode::VirtualMachine;
-use crate::compiler::compile_program;
-use crate::stdlib::StandardLibrary;
-use crate::error::FlowError;
+use flowlang::lexer::Lexer;
+use flowlang::parser::Parser;
+use flowlang::interpreter::Interpreter;
+use flowlang::bytecode::VirtualMachine;
+use flowlang::compiler::compile_program;
+use flowlang::stdlib::StandardLibrary;
+use flowlang::error::FlowError;
 
 fn main() {
     let matches = Command::new("FlowLang")

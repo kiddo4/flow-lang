@@ -1,0 +1,2 @@
+let obj be {"name": "FlowLang"}
+show to_string(obj.name == "FlowLang")

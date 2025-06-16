@@ -1,0 +1,10 @@
+# Very basic test
+
+let x be 5
+show "x is: " + x
+
+def square with n do
+    return n * n
+end
+
+show "Square of 4: " + square(4)

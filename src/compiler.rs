@@ -46,6 +46,11 @@ impl Compiler {
         }
     }
     
+    /// Check if a function name is a builtin function
+    fn is_builtin_function(&self, name: &str) -> bool {
+        matches!(name, "show" | "print" | "len" | "type" | "str" | "int" | "float")
+    }
+    
     pub fn compile(&mut self, statements: &[Statement]) -> Result<Chunk> {
         for statement in statements {
             self.compile_statement(statement)?;
@@ -130,16 +135,59 @@ impl Compiler {
             }
             
             Statement::For { variable, start, end, body } => {
-                // Compile start expression
+                self.begin_scope();
+                
+                // Compile start expression and store in loop variable
                 self.compile_expression(start)?;
-                // Compile end expression
+                self.add_local(variable.clone());
+                
+                // Compile end expression and store as local
                 self.compile_expression(end)?;
-                // TODO: Implement proper for loop with range
+                let end_local = self.locals.len();
+                self.add_local("__end".to_string());
+                
+                let loop_start = self.chunk.instructions.len();
+                self.loop_starts.push(loop_start);
+                self.loop_exits.push(Vec::new());
+                
+                // Load loop variable and end value for comparison
+                let var_index = self.resolve_local(variable).unwrap();
+                self.emit_instruction(Instruction::LoadLocal(var_index), 0);
+                self.emit_instruction(Instruction::LoadLocal(end_local), 0);
+                
+                // Check if loop variable >= end value
+                self.emit_instruction(Instruction::GreaterEqual, 0);
+                let exit_jump = self.emit_jump(Instruction::JumpIfTrue(0));
+                self.emit_instruction(Instruction::Pop, 0);
+                
+                // Execute loop body
                 for stmt in body {
                     self.compile_statement(stmt)?;
                 }
+                
+                // Increment loop variable
+                self.emit_instruction(Instruction::LoadLocal(var_index), 0);
+                self.emit_constant(Value::Integer(1), 0);
+                self.emit_instruction(Instruction::Add, 0);
+                self.emit_instruction(Instruction::StoreLocal(var_index), 0);
                 self.emit_instruction(Instruction::Pop, 0);
+                
+                // Jump back to loop condition
+                self.emit_loop(loop_start);
+                
+                // Patch exit jump
+                self.patch_jump(exit_jump);
                 self.emit_instruction(Instruction::Pop, 0);
+                
+                // Patch break statements
+                if let Some(exits) = self.loop_exits.pop() {
+                    for exit in exits {
+                        self.patch_jump(exit);
+                    }
+                }
+                self.loop_starts.pop();
+                
+                self.end_scope();
             }
             
             Statement::Return(expr) => {
@@ -185,13 +233,40 @@ impl Compiler {
                     Literal::Float(f) => Value::Float(*f),
                     Literal::Boolean(b) => Value::Boolean(*b),
                     Literal::Null => Value::Null,
-                    Literal::Array(_) => {
-                        // TODO: Implement array literal compilation
-                        return Err(FlowError::compilation_error("Array literals not yet implemented"));
+                    Literal::Array(elements) => {
+                        // Compile each element and push onto stack
+                        for element in elements {
+                            let value = match element {
+                                Literal::String(s) => Value::String(s.clone()),
+                                Literal::Integer(i) => Value::Integer(*i),
+                                Literal::BigInteger(bi) => Value::BigInteger(bi.clone()),
+                                Literal::Float(f) => Value::Float(*f),
+                                Literal::Boolean(b) => Value::Boolean(*b),
+                                Literal::Null => Value::Null,
+                                _ => return Err(FlowError::compilation_error("Nested arrays/objects in literals not yet supported")),
+                            };
+                            self.emit_constant(value, 0);
+                        }
+                        self.emit_instruction(Instruction::NewArray(elements.len()), 0);
+                        return Ok(());
                     },
-                    Literal::Object(_) => {
-                        // TODO: Implement object literal compilation
-                        return Err(FlowError::compilation_error("Object literals not yet implemented"));
+                    Literal::Object(properties) => {
+                        // Compile each property key-value pair
+                        for (key, value) in properties {
+                            self.emit_constant(Value::String(key.clone()), 0);
+                            let val = match value {
+                                Literal::String(s) => Value::String(s.clone()),
+                                Literal::Integer(i) => Value::Integer(*i),
+                                Literal::BigInteger(bi) => Value::BigInteger(bi.clone()),
+                                Literal::Float(f) => Value::Float(*f),
+                                Literal::Boolean(b) => Value::Boolean(*b),
+                                Literal::Null => Value::Null,
+                                _ => return Err(FlowError::compilation_error("Nested arrays/objects in literals not yet supported")),
+                            };
+                            self.emit_constant(val, 0);
+                        }
+                        self.emit_instruction(Instruction::NewObject, 0);
+                        return Ok(());
                     },
                 };
                 self.emit_constant(value, 0);
@@ -206,28 +281,55 @@ impl Compiler {
             }
             
             Expression::Binary { left, operator, right } => {
-                self.compile_expression(left)?;
-                self.compile_expression(right)?;
-                
                 match operator {
-                    BinaryOperator::Add => self.emit_instruction(Instruction::Add, 0),
-                    BinaryOperator::Subtract => self.emit_instruction(Instruction::Subtract, 0),
-                    BinaryOperator::Multiply => self.emit_instruction(Instruction::Multiply, 0),
-                    BinaryOperator::Divide => self.emit_instruction(Instruction::Divide, 0),
-                    BinaryOperator::Modulo => self.emit_instruction(Instruction::Modulo, 0),
-                    BinaryOperator::Equal => self.emit_instruction(Instruction::Equal, 0),
-                    BinaryOperator::NotEqual => self.emit_instruction(Instruction::NotEqual, 0),
-                    BinaryOperator::Greater => self.emit_instruction(Instruction::Greater, 0),
-                    BinaryOperator::GreaterEqual => self.emit_instruction(Instruction::GreaterEqual, 0),
-                    BinaryOperator::Less => self.emit_instruction(Instruction::Less, 0),
-                    BinaryOperator::LessEqual => self.emit_instruction(Instruction::LessEqual, 0),
                     BinaryOperator::And => {
-                        // Short-circuit evaluation
-                        return Err(FlowError::compilation_error("Logical AND not yet implemented in bytecode"));
+                        // Short-circuit evaluation for AND
+                        self.compile_expression(left)?;
+                        
+                        // If left is false, skip right operand
+                        let end_jump = self.emit_jump(Instruction::JumpIfFalse(0));
+                        self.emit_instruction(Instruction::Pop, 0); // Pop left value
+                        
+                        // Compile right operand
+                        self.compile_expression(right)?;
+                        
+                        self.patch_jump(end_jump);
                     }
                     BinaryOperator::Or => {
-                        // Short-circuit evaluation
-                        return Err(FlowError::compilation_error("Logical OR not yet implemented in bytecode"));
+                        // Short-circuit evaluation for OR
+                        self.compile_expression(left)?;
+                        
+                        // If left is true, skip right operand
+                        let else_jump = self.emit_jump(Instruction::JumpIfFalse(0));
+                        let end_jump = self.emit_jump(Instruction::Jump(0));
+                        
+                        self.patch_jump(else_jump);
+                        self.emit_instruction(Instruction::Pop, 0); // Pop left value
+                        
+                        // Compile right operand
+                        self.compile_expression(right)?;
+                        
+                        self.patch_jump(end_jump);
+                    }
+                    _ => {
+                        // For all other operators, compile both operands first
+                        self.compile_expression(left)?;
+                        self.compile_expression(right)?;
+                        
+                        match operator {
+                            BinaryOperator::Add => self.emit_instruction(Instruction::Add, 0),
+                            BinaryOperator::Subtract => self.emit_instruction(Instruction::Subtract, 0),
+                            BinaryOperator::Multiply => self.emit_instruction(Instruction::Multiply, 0),
+                            BinaryOperator::Divide => self.emit_instruction(Instruction::Divide, 0),
+                            BinaryOperator::Modulo => self.emit_instruction(Instruction::Modulo, 0),
+                            BinaryOperator::Equal => self.emit_instruction(Instruction::Equal, 0),
+                            BinaryOperator::NotEqual => self.emit_instruction(Instruction::NotEqual, 0),
+                            BinaryOperator::Greater => self.emit_instruction(Instruction::Greater, 0),
+                            BinaryOperator::GreaterEqual => self.emit_instruction(Instruction::GreaterEqual, 0),
+                            BinaryOperator::Less => self.emit_instruction(Instruction::Less, 0),
+                            BinaryOperator::LessEqual => self.emit_instruction(Instruction::LessEqual, 0),
+                            BinaryOperator::And | BinaryOperator::Or => unreachable!(), // Handled above
+                        }
                     }
                 }
             }
@@ -242,14 +344,21 @@ impl Compiler {
             }
             
             Expression::FunctionCall { name, arguments } => {
-                // Load function by name
-                self.emit_instruction(Instruction::LoadGlobal(name.clone()), 0);
-                
+                // Compile arguments first
                 for arg in arguments {
                     self.compile_expression(arg)?;
                 }
                 
-                self.emit_instruction(Instruction::Call(arguments.len()), 0);
+                // Check if it's a builtin function
+                if self.is_builtin_function(name) {
+                    // Push argument count for builtin call
+                    self.emit_constant(Value::Integer(arguments.len() as i64), 0);
+                    self.emit_instruction(Instruction::CallBuiltin(name.clone()), 0);
+                } else {
+                    // Load function by name
+                    self.emit_instruction(Instruction::LoadGlobal(name.clone()), 0);
+                    self.emit_instruction(Instruction::Call(arguments.len()), 0);
+                }
             }
             
             Expression::MethodCall { object, method, arguments } => {
@@ -290,8 +399,34 @@ impl Compiler {
             }
             
             Expression::Lambda { parameters, body } => {
-                // TODO: Implement lambda compilation
-                return Err(FlowError::compilation_error("Lambda expressions not yet implemented in bytecode"));
+                // Create a new compiler for the lambda
+                let mut lambda_compiler = Compiler::new();
+                lambda_compiler.function_type = FunctionType::Lambda;
+                
+                // Add parameters as locals
+                for param in parameters {
+                    lambda_compiler.add_local(param.name.clone());
+                }
+                
+                // Compile lambda body (which is an expression)
+                lambda_compiler.compile_expression(body)?;
+                lambda_compiler.emit_instruction(Instruction::Return, 0);
+                
+                let lambda_chunk = lambda_compiler.chunk;
+                
+                // Create a closure value
+                let closure_address = self.chunk.constants.len();
+                let closure_value = Value::BytecodeFunction {
+                    address: closure_address,
+                    arity: parameters.len(),
+                    locals_count: lambda_compiler.locals.len(),
+                };
+                
+                // Store the lambda chunk as a constant
+                self.chunk.constants.push(closure_value.clone());
+                
+                // Emit instruction to create closure
+                self.emit_instruction(Instruction::NewClosure(closure_address), 0);
             }
         }
         

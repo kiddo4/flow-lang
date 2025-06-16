@@ -43,6 +43,9 @@ pub mod optimized_vm;
 pub mod jit;
 pub mod memory;
 pub mod specialized_instructions;
+pub mod stdlib;
+pub mod stdlib_modules;
+pub mod compiler;
 
 pub use ast::*;
 pub use error::*;

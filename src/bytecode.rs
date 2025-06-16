@@ -958,6 +958,36 @@ impl VirtualMachine {
                     return Err(FlowError::runtime_error("Method calls not yet implemented"));
                 }
                 
+                Instruction::Return => {
+                    // Return from function with null value
+                    if let Some(frame) = self.call_stack.pop() {
+                        // Restore previous state
+                        self.instruction_pointer = frame.instruction_pointer;
+                        // Push null as return value
+                        self.stack.push(Value::Null);
+                    } else {
+                        // No call frame to return from, halt execution
+                        break;
+                    }
+                }
+                
+                Instruction::ReturnValue => {
+                    // Return from function with value from stack
+                    let return_value = self.stack.pop().ok_or_else(|| {
+                        FlowError::runtime_error("Stack underflow: no return value")
+                    })?;
+                    
+                    if let Some(frame) = self.call_stack.pop() {
+                        // Restore previous state
+                        self.instruction_pointer = frame.instruction_pointer;
+                        // Push return value
+                        self.stack.push(return_value);
+                    } else {
+                        // No call frame to return from, halt execution
+                        break;
+                    }
+                }
+                
                 Instruction::Halt => break,
                 
                 _ => {
@@ -1044,6 +1074,9 @@ impl VirtualMachine {
                 }
             }
             (Value::String(x), Value::String(y)) => Ok(Value::String(format!("{}{}", x, y))),
+            // String concatenation with automatic conversion
+            (Value::String(x), y) => Ok(Value::String(format!("{}{}", x, y.to_string()))),
+            (x, Value::String(y)) => Ok(Value::String(format!("{}{}", x.to_string(), y))),
             _ => Err(FlowError::type_error(format!(
                 "Cannot add {} and {}",
                 a.type_name(),
