@@ -66,6 +66,221 @@ impl Interpreter {
         // No need to pre-register them in the environment
     }
     
+    fn handle_import(&mut self, module_path: &str, imports: &ImportType) -> Result<()> {
+        match module_path {
+            "std" => self.handle_std_import(imports),
+            "io" => self.handle_io_import(imports),
+            "sys" => self.handle_sys_import(imports),
+            "json" => self.handle_json_import(imports),
+            "crypto" => self.handle_crypto_import(imports),
+            "random" => self.handle_random_import(imports),
+            "url" => self.handle_url_import(imports),
+            "dir" => self.handle_dir_import(imports),
+            _ => {
+                return Err(FlowError::runtime_error(format!("Unknown module: {}", module_path)));
+            }
+        }
+    }
+    
+    fn handle_std_import(&mut self, imports: &ImportType) -> Result<()> {
+        match imports {
+            ImportType::All => {
+                // Create a module object with all std functions
+                let mut module_obj = FlowObject::new();
+                for func_name in self.get_std_function_names() {
+                    let func = Value::Function {
+                        name: func_name.clone(),
+                        parameters: vec![],
+                        body: vec![],
+                    };
+                    module_obj.set(func_name, func);
+                }
+                self.environment.define_variable("std".to_string(), Value::Object(module_obj));
+                Ok(())
+            }
+            ImportType::Specific(functions) => {
+                for func_name in functions {
+                    if self.stdlib.has_function(func_name) {
+                        // Create a wrapper function in the environment
+                        let func = Value::Function {
+                            name: func_name.clone(),
+                            parameters: vec![], // Will be handled dynamically
+                            body: vec![], // Stdlib functions don't have AST bodies
+                        };
+                        self.environment.define_variable(func_name.clone(), func);
+                    } else {
+                        return Err(FlowError::runtime_error(format!(
+                            "Function '{}' not found in std module", 
+                            func_name
+                        )));
+                    }
+                }
+                Ok(())
+            }
+            ImportType::Aliased(_, alias) => {
+                // Create a module object with all std functions
+                let mut module_obj = FlowObject::new();
+                for func_name in self.get_std_function_names() {
+                    let func = Value::Function {
+                        name: func_name.clone(),
+                        parameters: vec![],
+                        body: vec![],
+                    };
+                    module_obj.set(func_name, func);
+                }
+                self.environment.define_variable(alias.clone(), Value::Object(module_obj));
+                Ok(())
+            }
+            ImportType::SpecificAliased(func_aliases) => {
+                for (func_name, alias) in func_aliases {
+                    if self.stdlib.has_function(func_name) {
+                        let func = Value::Function {
+                            name: func_name.clone(),
+                            parameters: vec![],
+                            body: vec![],
+                        };
+                        self.environment.define_variable(alias.clone(), func);
+                    } else {
+                        return Err(FlowError::runtime_error(format!(
+                            "Function '{}' not found in std module", 
+                            func_name
+                        )));
+                    }
+                }
+                Ok(())
+            }
+        }
+    }
+    
+    fn handle_io_import(&mut self, imports: &ImportType) -> Result<()> {
+        let io_functions = vec!["write_file", "read_file", "append_file", "file_exists", "delete_file"];
+        self.handle_module_import("io", &io_functions, imports)
+    }
+    
+    fn handle_sys_import(&mut self, imports: &ImportType) -> Result<()> {
+        let sys_functions = vec!["get_env", "set_env", "get_cwd", "execute_command"];
+        self.handle_module_import("sys", &sys_functions, imports)
+    }
+    
+    fn handle_json_import(&mut self, imports: &ImportType) -> Result<()> {
+        let json_functions = vec!["json_stringify", "json_parse"];
+        self.handle_module_import("json", &json_functions, imports)
+    }
+    
+    fn handle_crypto_import(&mut self, imports: &ImportType) -> Result<()> {
+        let crypto_functions = vec!["hash_sha256", "hash_md5", "generate_uuid"];
+        self.handle_module_import("crypto", &crypto_functions, imports)
+    }
+    
+    fn handle_random_import(&mut self, imports: &ImportType) -> Result<()> {
+        let random_functions = vec!["random_int", "random_float", "random_choice"];
+        self.handle_module_import("random", &random_functions, imports)
+    }
+    
+    fn handle_url_import(&mut self, imports: &ImportType) -> Result<()> {
+        let url_functions = vec!["url_encode", "url_decode", "parse_url"];
+        self.handle_module_import("url", &url_functions, imports)
+    }
+    
+    fn handle_dir_import(&mut self, imports: &ImportType) -> Result<()> {
+        let dir_functions = vec!["list_directory", "create_directory", "remove_directory"];
+        self.handle_module_import("dir", &dir_functions, imports)
+    }
+    
+    fn handle_module_import(
+        &mut self, 
+        module_name: &str, 
+        available_functions: &[&str], 
+        imports: &ImportType
+    ) -> Result<()> {
+        match imports {
+            ImportType::All => {
+                for func_name in available_functions {
+                    if self.stdlib.has_function(func_name) {
+                        let func = Value::Function {
+                            name: func_name.to_string(),
+                            parameters: vec![],
+                            body: vec![],
+                        };
+                        self.environment.define_variable(func_name.to_string(), func);
+                    }
+                }
+                Ok(())
+            }
+            ImportType::Specific(functions) => {
+                for func_name in functions {
+                    if available_functions.contains(&func_name.as_str()) {
+                        if self.stdlib.has_function(func_name) {
+                            let func = Value::Function {
+                                name: func_name.clone(),
+                                parameters: vec![],
+                                body: vec![],
+                            };
+                            self.environment.define_variable(func_name.clone(), func);
+                        }
+                    } else {
+                        return Err(FlowError::runtime_error(format!(
+                            "Function '{}' not found in {} module", 
+                            func_name, 
+                            module_name
+                        )));
+                    }
+                }
+                Ok(())
+            }
+            ImportType::Aliased(_, alias) => {
+                let mut module_obj = FlowObject::new();
+                for func_name in available_functions {
+                    if self.stdlib.has_function(func_name) {
+                        let func = Value::Function {
+                            name: func_name.to_string(),
+                            parameters: vec![],
+                            body: vec![],
+                        };
+                        module_obj.set(func_name.to_string(), func);
+                    }
+                }
+                self.environment.define_variable(alias.clone(), Value::Object(module_obj));
+                Ok(())
+            }
+            ImportType::SpecificAliased(func_aliases) => {
+                for (func_name, alias) in func_aliases {
+                    if available_functions.contains(&func_name.as_str()) {
+                        if self.stdlib.has_function(func_name) {
+                            let func = Value::Function {
+                                name: func_name.clone(),
+                                parameters: vec![],
+                                body: vec![],
+                            };
+                            self.environment.define_variable(alias.clone(), func);
+                        }
+                    } else {
+                        return Err(FlowError::runtime_error(format!(
+                            "Function '{}' not found in {} module", 
+                            func_name, 
+                            module_name
+                        )));
+                    }
+                }
+                Ok(())
+            }
+        }
+    }
+    
+    fn get_std_function_names(&self) -> Vec<String> {
+        // Return all available standard library function names
+        vec![
+            "write_file".to_string(), "read_file".to_string(), "append_file".to_string(),
+            "file_exists".to_string(), "delete_file".to_string(),
+            "get_env".to_string(), "set_env".to_string(), "get_cwd".to_string(), "execute_command".to_string(),
+            "json_stringify".to_string(), "json_parse".to_string(),
+            "hash_sha256".to_string(), "hash_md5".to_string(), "generate_uuid".to_string(),
+            "random_int".to_string(), "random_float".to_string(), "random_choice".to_string(),
+            "url_encode".to_string(), "url_decode".to_string(), "parse_url".to_string(),
+            "list_directory".to_string(), "create_directory".to_string(), "remove_directory".to_string(),
+        ]
+    }
+    
     pub fn set_variable(&mut self, name: String, value: Value) {
         self.environment.define_variable(name, value);
     }
@@ -209,11 +424,8 @@ impl Interpreter {
                 Ok(())
             }
             
-            Statement::Import(module) => {
-                // For now, just acknowledge the import
-                // In a full implementation, this would load external modules
-                println!("Importing module: {}", module);
-                Ok(())
+            Statement::Import { module_path, imports } => {
+                self.handle_import(module_path, imports)
             }
         }
     }
@@ -504,27 +716,35 @@ impl Interpreter {
     }
     
     fn call_function(&mut self, name: &str, arguments: &[Expression]) -> Result<Value> {
-        // First check if it's a stdlib function (both legacy and extended)
-        if self.stdlib.has_function(name) {
-            // Evaluate arguments for stdlib function
-            let mut args = Vec::new();
-            for arg in arguments {
-                args.push(self.evaluate_expression(arg)?);
-            }
-            return self.stdlib.call_function(name, &args);
-        }
-        
-        // Then check functions, then check variables for lambda values
+        // First check functions and variables for lambda values
         let function = if let Some(func) = self.environment.get_function(name) {
             func.clone()
         } else if let Some(var) = self.environment.get_variable(name) {
             var.clone()
         } else {
+            // If not found in environment, check if it's a stdlib function
+            if self.stdlib.has_function(name) {
+                // Evaluate arguments for stdlib function
+                let mut args = Vec::new();
+                for arg in arguments {
+                    args.push(self.evaluate_expression(arg)?);
+                }
+                return self.stdlib.call_function(name, &args);
+            }
             return Err(FlowError::undefined_function(name));
         };
         
         match function {
-            Value::Function { parameters, body, .. } => {
+            Value::Function { name: func_name, parameters, body } => {
+                // If this is a stdlib function wrapper, call the stdlib
+                if self.stdlib.has_function(&func_name) {
+                    let mut args = Vec::new();
+                    for arg in arguments {
+                        args.push(self.evaluate_expression(arg)?);
+                    }
+                    return self.stdlib.call_function(&func_name, &args);
+                }
+                // Otherwise call as user-defined function
                 self.call_function_with_params(&parameters, &body, arguments)
             }
             
@@ -641,6 +861,18 @@ impl Interpreter {
                 }
             }
             Value::Object(obj) => {
+                // First check if the method exists as a property in the object
+                if let Some(func_value) = obj.get(method) {
+                    if let Value::Function { name, .. } = func_value {
+                        // Evaluate arguments and call the stdlib function
+                        let mut args = Vec::new();
+                        for arg in arguments {
+                            args.push(self.evaluate_expression(arg)?);
+                        }
+                        return self.stdlib.call_function(name, &args);
+                    }
+                }
+                
                 let mut obj_copy = obj.clone();
                 match method {
                     "keys" => {

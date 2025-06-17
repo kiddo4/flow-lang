@@ -1,0 +1,55 @@
+# FlowLang Syntax Highlighting Test
+# This file demonstrates various FlowLang syntax features
+
+# Variable declarations
+let message be "Hello, FlowLang!"
+let number be 42
+let pi be 3.14159
+
+# Function definition
+def greet with name do
+    if name == "" then
+        return "Hello, World!"
+    else
+      return "Hello, " + name + "!"
+    end
+end
+
+# Array and object examples
+let numbers be [1, 2, 3, 4, 5]
+let person be {
+    name: "Alice",
+    age: 30,
+    city: "New York"
+}
+ 
+# Control flow examples
+for i from 1 to 10 do
+    if i % 2 == 0 then
+        show "Even: " + i
+    else
+        show "Odd: " + i
+    end
+end
+
+# While loop
+let counter be 0
+while counter < 5 do
+    show "Counter: " + counter
+    let counter be counter + 1
+end
+
+# Function calls
+show greet("FlowLang")
+show "Array length: " + numbers.length
+show "Person name: " + person.name
+
+# Comments and operators
+# Mathematical operations: +, -, *, /, %
+# Comparison operators: ==, !=, <, >, <=, >=
+# Logical operators: and, or, not
+
+let result be (10 + 5) * 2 - 3
+show "Result: " + result
+
+func greet()

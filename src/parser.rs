@@ -268,13 +268,67 @@ impl Parser {
     fn import_statement(&mut self) -> Result<Statement> {
         self.consume(&Token::Import, "Expected 'import'")?;
         
-        let module = match self.advance() {
+        let module_path = match self.advance() {
             Token::Identifier(name) => name.clone(),
             _ => return Err(FlowError::parser_error("Expected module name")),
         };
         
+        let imports = if self.check(&Token::LeftBrace) {
+            // import module { func1, func2 }
+            self.advance(); // consume '{'
+            let mut specific_imports = Vec::new();
+            
+            loop {
+                let func_name = match self.advance() {
+                    Token::Identifier(name) => name.clone(),
+                    _ => return Err(FlowError::parser_error("Expected function name")),
+                };
+                
+                if self.check(&Token::As) {
+                    self.advance(); // consume 'as'
+                    let alias = match self.advance() {
+                        Token::Identifier(name) => name.clone(),
+                        _ => return Err(FlowError::parser_error("Expected alias name")),
+                    };
+                    specific_imports.push((func_name, alias));
+                } else {
+                    specific_imports.push((func_name.clone(), func_name));
+                }
+                
+                if self.check(&Token::Comma) {
+                    self.advance();
+                } else {
+                    break;
+                }
+            }
+            
+            self.consume(&Token::RightBrace, "Expected '}'")?;
+            
+            // Determine if we have any aliases
+            if specific_imports.iter().any(|(name, alias)| name != alias) {
+                ImportType::SpecificAliased(specific_imports)
+            } else {
+                ImportType::Specific(specific_imports
+                    .into_iter()
+                    .map(|(name, _)| name)
+                    .collect()
+                )
+            }
+        } else if self.check(&Token::As) {
+            // import module as alias
+            self.advance(); // consume 'as'
+            let alias = match self.advance() {
+                Token::Identifier(name) => name.clone(),
+                _ => return Err(FlowError::parser_error("Expected alias name")),
+            };
+            ImportType::Aliased(module_path.clone(), alias)
+        } else {
+            // import module
+            ImportType::All
+        };
+        
         self.consume_newline_or_eof()?;
-        Ok(Statement::Import(module))
+        Ok(Statement::Import { module_path, imports })
     }
     
     fn export_statement(&mut self) -> Result<Statement> {

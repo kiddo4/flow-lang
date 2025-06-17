@@ -1464,7 +1464,7 @@ impl BytecodeCompiler {
                 self.emit_instruction(Instruction::Pop);
             }
             
-            Statement::Import(_) => {
+            Statement::Import { .. } => {
                 // Import handling would be done at a higher level
             }
             

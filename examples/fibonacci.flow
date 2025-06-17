@@ -14,18 +14,18 @@ def fibonacci_iterative with n do
     if n <= 1 then
         return n
     end
-    
+
     let a be 0
     let b be 1
     let i be 2
-    
+
     while i <= n do
         let temp be a + b
         let a be b
         let b be temp
         let i be i + 1
     end
-    
+
     return b
 end
 

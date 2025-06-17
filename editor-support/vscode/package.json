@@ -1,0 +1,57 @@
+{
+  "name": "flowlang-syntax",
+  "displayName": "FlowLang Syntax Highlighting",
+  "description": "Syntax highlighting and language support for FlowLang programming language",
+  "version": "1.0.0",
+  "publisher": "flowlang",
+  "author": {
+    "name": "FlowLang Team"
+  },
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/flowlang/flowlang"
+  },
+  "homepage": "https://github.com/flowlang/flowlang",
+  "bugs": {
+    "url": "https://github.com/flowlang/flowlang/issues"
+  },
+  "keywords": [
+    "flowlang",
+    "syntax",
+    "highlighting",
+    "programming",
+    "language"
+  ],
+  "engines": {
+    "vscode": "^1.74.0"
+  },
+  "categories": [
+    "Programming Languages"
+  ],
+  "activationEvents": [
+    "onLanguage:flowlang"
+  ],
+  "main": "./extension.js",
+  "contributes": {
+    "languages": [{
+      "id": "flowlang",
+      "aliases": ["FlowLang", "flowlang"],
+      "extensions": [".flow"],
+      "configuration": "./language-configuration.json",
+      "icon": {
+        "light": "./icons/flowlang-light.svg",
+        "dark": "./icons/flowlang-dark.svg"
+      }
+    }],
+    "grammars": [{
+      "language": "flowlang",
+      "scopeName": "source.flowlang",
+      "path": "./syntaxes/flowlang.tmLanguage.json"
+    }]
+  },
+  "scripts": {
+    "package": "vsce package",
+    "publish": "vsce publish"
+  }
+}

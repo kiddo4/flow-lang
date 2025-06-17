@@ -34,7 +34,10 @@ pub enum Statement {
     Show(Expression),
     Return(Option<Expression>),
     Expression(Expression),
-    Import(String),
+    Import {
+        module_path: String,
+        imports: ImportType,
+    },
     Export(Box<Statement>),
     TryCatch {
         try_block: Vec<Statement>,
@@ -90,6 +93,25 @@ pub struct Parameter {
     pub name: String,
     pub default_value: Option<Expression>,
     pub is_variadic: bool,
+}
+
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+pub enum ImportType {
+    /// Traditional import: `import std`
+    /// Imports all functions from the module into the global namespace
+    All,
+    
+    /// Specific function imports: `import std { write_file, read_file }`
+    /// Imports only the specified functions into the global namespace
+    Specific(Vec<String>),
+    
+    /// Module aliasing: `import std as stdlib`
+    /// Imports the entire module under a different name
+    Aliased(String, String), // (original_name, alias)
+    
+    /// Specific function imports with aliases: `import std { write_file as write, read_file }`
+    /// Imports specific functions with custom names
+    SpecificAliased(Vec<(String, String)>), // Vec<(original_name, alias)>
 }
 
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]

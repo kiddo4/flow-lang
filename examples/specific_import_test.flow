@@ -1,0 +1,6 @@
+# Test specific function imports
+import std { write_file, read_file }
+show "Testing specific imports"
+write_file "test.txt" "Hello World"
+let content be read_file "test.txt"
+show "Content: " + content
