@@ -1,7 +1,0 @@
-show "Testing stdlib functions"
-
-// Test to_string function
-let num be 42
-show "Number: " + to_string(num)
-
-show "Test complete"

@@ -1,4 +1,0 @@
-show "Testing without function calls"
-let num be 42
-show "Number: 42"
-show "Test complete"

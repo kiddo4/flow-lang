@@ -1,2 +1,0 @@
-let obj be {"name": "test"}
-show obj.name

@@ -1,4 +1,0 @@
-import std { write_file }
-show "Testing direct function call"
-write_file("direct.txt", "direct call test")
-show "Direct call successful"

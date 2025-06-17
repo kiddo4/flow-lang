@@ -1,2 +1,0 @@
-let arr be [1, 2, 3]
-show arr.length

@@ -1,3 +1,0 @@
-# Test large number parsing
-let big_number be 999999999999999999999999999999
-show big_number

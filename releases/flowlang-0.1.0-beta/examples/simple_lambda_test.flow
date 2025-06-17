@@ -1,3 +1,0 @@
-// Simple lambda test without function calls
-let square be (x) => x * x
-print("Lambda created successfully")

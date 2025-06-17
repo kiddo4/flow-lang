@@ -1,2 +1,0 @@
-let post_data be json_stringify({"message": "Hello from FlowLang"})
-show post_data

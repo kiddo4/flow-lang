@@ -1,4 +1,0 @@
-let all_env be get_all_env()
-let keys be object_keys(all_env)
-let count be array_len(keys)
-show to_string(count)

@@ -1,3 +1,0 @@
-# Simple import test
-import std
-show "Testing simple import"

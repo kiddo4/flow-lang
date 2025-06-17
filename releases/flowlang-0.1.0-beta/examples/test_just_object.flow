@@ -1,2 +1,0 @@
-let test_obj be {"message": "Hello from FlowLang"}
-show test_obj

@@ -1,2 +1,0 @@
-import std { write_file }
-write_file("test.txt", "Hello")

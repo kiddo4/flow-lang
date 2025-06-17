@@ -1,8 +1,0 @@
-// Test HTTP functions (mock)
-show "\n--- Testing HTTP Functions ---"
-let http_response be http_get("https://api.example.com/test")
-show "HTTP GET response status: " + str(http_response.status)
-
-let post_data be json_stringify({"message": "Hello from FlowLang"})
-let post_response be http_post("https://api.example.com/data", post_data)
-show "HTTP POST response status: " + str(post_response.status)
