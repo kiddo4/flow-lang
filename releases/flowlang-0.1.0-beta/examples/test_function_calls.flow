@@ -1,0 +1,13 @@
+show "Testing function calls"
+
+// Test to_string function
+let num be 42
+let str_result be to_string(num)
+show "to_string result: " + str_result
+
+// Test array_len function
+let arr be [1, 2, 3]
+let len_result be array_len(arr)
+show "array_len result: " + to_string(len_result)
+
+show "Function calls test complete"

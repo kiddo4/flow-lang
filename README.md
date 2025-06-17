@@ -1,4 +1,4 @@
-# FlowLang 🌊
+# FlowLang
 
 A modern, human-friendly, and secure programming language designed to make software development easy for everyone — from absolute beginners to expert developers.
 
@@ -9,21 +9,63 @@ A modern, human-friendly, and secure programming language designed to make softw
 - **Human-Friendly**: Clean, minimal syntax inspired by natural language
 - **Interactive REPL**: Test code snippets instantly
 - **Cross-Platform**: Works on Windows, macOS, and Linux
+- **Editor Support**: Syntax highlighting for VS Code, Sublime Text, Vim/Neovim
 
-## Installation
+## Quick Start
 
-### Prerequisites
-- Rust 1.70+ installed on your system
+### Download Pre-built Release (Recommended)
+
+1. **Download the latest release**:
+   - Go to [Releases](https://github.com/flowlang/flowlang/releases)
+   - Download `flowlang-0.1.0-beta.tar.gz` or `flowlang-0.1.0-beta.zip`
+   - Extract the archive
+
+2. **Install FlowLang**:
+   ```bash
+   # Unix/Linux/macOS
+   cd flowlang-0.1.0-beta
+   ./install.sh
+   
+   # Windows
+   install.bat
+   ```
+
+3. **Install Editor Support**:
+   ```bash
+   cd editor-support
+   ./install.sh
+   ```
+
+4. **Test Installation**:
+   ```bash
+   flowlang --help
+   flowlang examples/hello.flow
+   ```
 
 ### Build from Source
 
+#### Prerequisites
+- Rust 1.70+ installed on your system
+- Git
+
+#### Build Steps
+
 ```bash
-git clone <repository-url>
+git clone https://github.com/flowlang/flowlang.git
 cd flowlang
 cargo build --release
 ```
 
 The compiled binary will be available at `target/release/flowlang`.
+
+#### Install Globally
+
+```bash
+# Copy to system PATH
+sudo cp target/release/flowlang /usr/local/bin/
+# or for user-only installation
+cp target/release/flowlang ~/.local/bin/
+```
 
 ## Usage
 
@@ -31,231 +73,260 @@ The compiled binary will be available at `target/release/flowlang`.
 
 ```bash
 # Run a FlowLang program
-./target/release/flowlang program.flow
-
-# Or if installed globally
 flowlang program.flow
+
+# Run with verbose output
+flowlang --verbose program.flow
 ```
 
 ### Interactive REPL
 
 ```bash
 # Start the interactive REPL
-./target/release/flowlang --repl
+flowlang --repl
 # or
-./target/release/flowlang -r
+flowlang -r
+```
+
+### Command Line Options
+
+```bash
+flowlang --help              # Show help
+flowlang --version           # Show version
+flowlang --repl              # Start REPL
+flowlang --verbose file.flow # Run with verbose output
+flowlang --ast file.flow     # Show AST (debug)
+flowlang --bytecode file.flow # Show bytecode (debug)
 ```
 
 ## Language Syntax
 
-### Variables
+### Variables and Basic Types
 
 ```flowlang
-let name be "Alice"
-let age be 25
-let isActive be true
-let score be 98.7
+# Variables
+let name = "FlowLang"
+let version = 0.1
+let is_beta = true
+
+# Arrays
+let numbers = [1, 2, 3, 4, 5]
+let mixed = ["hello", 42, true]
+
+# Objects
+let person = {
+    name: "Alice",
+    age: 30,
+    active: true
+}
 ```
 
 ### Functions
 
 ```flowlang
-def greet with name, age do
-    return "Hi, " + name + ", you are " + age + " years old"
+# Function definition
+def greet with name do
+    show "Hello, " + name + "!"
 end
 
-let message be greet("Bob", 30)
-show message
+# Function with return value
+def add with a, b do
+    return a + b
+end
+
+# Function calls
+greet("Developer")
+let result = add(5, 3)
 ```
 
-### Output
+### Control Flow
 
 ```flowlang
-show "Hello, world!"
-show name
-show age + 5
-```
-
-### Conditionals
-
-```flowlang
-let age be 18
-
-if age >= 18 then
-    show "You can vote"
+# Conditionals
+if version > 0 then
+    show "Beta version"
 else
-    show "You are too young"
+    show "Development version"
 end
 
-# Else-if chains
-if score > 80 then
-    show "Great"
-else if score > 50 then
-    show "Average"
-else
-    show "Poor"
-end
-```
-
-### Loops
-
-```flowlang
-# For loop
-for i from 1 to 5 do
+# Loops
+for i in 1 to 10 do
     show i
 end
 
-# While loop
-let i be 0
-while i < 5 do
-    show i
-    let i be i + 1
+for item in numbers do
+    show item
 end
 ```
 
 ### Comments
 
 ```flowlang
-# This is a comment
-let name be "Jane"  # Variable for user's name
+# This is a single-line comment
+
+# Multi-line comments are just
+# multiple single-line comments
 ```
 
-### Operators
+## Editor Support
 
-- **Arithmetic**: `+`, `-`, `*`, `/`, `%`
-- **Comparison**: `==`, `!=`, `>`, `<`, `>=`, `<=`
-- **Logical**: `and`, `or`, `not`
+FlowLang provides syntax highlighting and formatting support for popular editors:
 
-## Example Programs
+### Visual Studio Code
+
+**Option 1: Install via VSIX (Recommended)**
+```bash
+code --install-extension editor-support/vscode/flowlang-syntax-1.0.0.vsix
+```
+
+**Option 2: Automatic Installation**
+```bash
+cd editor-support
+./install.sh
+# Select option 1 for VS Code
+```
+
+### Sublime Text
+
+```bash
+cd editor-support
+./install.sh
+# Select option 2 for Sublime Text
+```
+
+### Vim/Neovim
+
+```bash
+cd editor-support
+./install.sh
+# Select option 3 for Vim or option 4 for Neovim
+```
+
+### Features Provided
+
+- ✅ **Syntax Highlighting**: Keywords, strings, numbers, comments
+- ✅ **Auto-indentation**: Proper code formatting
+- ✅ **Bracket Matching**: Automatic bracket completion
+- ✅ **File Recognition**: Automatic detection of `.flow` files
+- ✅ **Theme Compatibility**: Works with all editor themes
+
+## Examples
+
+The `examples/` directory contains sample FlowLang programs:
+
+- `hello.flow` - Hello World program
+- `fibonacci.flow` - Fibonacci sequence generator
+- `calculator.flow` - Simple calculator
+- `fizzbuzz.flow` - FizzBuzz implementation
+- `collections.flow` - Working with arrays and objects
 
 ### Hello World
 
 ```flowlang
-show "Hello, FlowLang!"
-```
-
-### Calculator
-
-```flowlang
-def add with a, b do
-    return a + b
+# examples/hello.flow
+def main do
+    show "Hello, FlowLang!"
 end
 
-def multiply with a, b do
-    return a * b
-end
-
-let result be add(5, 3)
-show "5 + 3 = " + result
-
-let product be multiply(4, 7)
-show "4 * 7 = " + product
+main()
 ```
 
 ### Fibonacci Sequence
 
 ```flowlang
+# examples/fibonacci.flow
 def fibonacci with n do
     if n <= 1 then
         return n
     else
-        return fibonacci(n - 1) + fibonacci(n - 2)
+        return fibonacci(n-1) + fibonacci(n-2)
     end
 end
 
-for i from 0 to 10 do
+for i in 1 to 10 do
     show "fib(" + i + ") = " + fibonacci(i)
 end
 ```
 
-### FizzBuzz
+## Development
 
-```flowlang
-for i from 1 to 100 do
-    if i % 15 == 0 then
-        show "FizzBuzz"
-    else if i % 3 == 0 then
-        show "Fizz"
-    else if i % 5 == 0 then
-        show "Buzz"
-    else
-        show i
-    end
-end
-```
-
-## Project Structure
+### Project Structure
 
 ```
 flowlang/
-├── src/
-│   ├── main.rs          # CLI entry point
-│   ├── lexer.rs         # Tokenization
-│   ├── parser.rs        # AST generation
-│   ├── interpreter.rs   # Code execution
-│   ├── ast.rs          # Abstract syntax tree definitions
-│   └── error.rs        # Error handling
+├── src/                 # Rust source code
+│   ├── main.rs         # CLI entry point
+│   ├── lib.rs          # Library entry point
+│   ├── lexer.rs        # Tokenizer
+│   ├── parser.rs       # Parser
+│   ├── ast.rs          # Abstract Syntax Tree
+│   ├── interpreter.rs  # Interpreter
+│   └── stdlib.rs       # Standard library
 ├── examples/           # Example FlowLang programs
-├── tests/             # Test suite
-├── Cargo.toml         # Rust dependencies
-└── README.md          # This file
+├── editor-support/     # Editor integrations
+│   ├── vscode/        # VS Code extension
+│   ├── sublime-text/  # Sublime Text syntax
+│   └── vim/           # Vim syntax
+├── docs/              # Documentation
+└── tests/             # Test suite
 ```
-
-## Development
 
 ### Running Tests
 
 ```bash
+# Run all tests
 cargo test
+
+# Run with output
+cargo test -- --nocapture
+
+# Run specific test
+cargo test test_name
 ```
 
-### Development Build
+### Building Release
 
 ```bash
-cargo run -- examples/hello.flow
+# Build optimized release
+cargo build --release
+
+# Create cross-platform release package
+./scripts/build-release.sh
 ```
-
-### REPL Development
-
-```bash
-cargo run -- --repl
-```
-
-## Roadmap
-
-### Current Features (v0.1)
-- [x] Basic syntax (variables, functions, conditionals, loops)
-- [x] Arithmetic and logical operations
-- [x] String manipulation
-- [x] Interactive REPL
-- [x] Error handling and reporting
-
-### Planned Features
-- [ ] Static & dynamic typing support
-- [ ] Native async/await
-- [ ] Pattern matching
-- [ ] Class-based & functional programming
-- [ ] Package management system
-- [ ] Standard library
-- [ ] WebAssembly compilation
-- [ ] IDE integration
-- [ ] Debugger support
 
 ## Contributing
 
-We welcome contributions! Please see our contributing guidelines for more information.
+We welcome contributions! Please see our [Contributing Guide](CONTRIBUTING.md) for details.
+
+### Development Setup
+
+1. Fork the repository
+2. Clone your fork: `git clone https://github.com/yourusername/flowlang.git`
+3. Create a feature branch: `git checkout -b feature-name`
+4. Make your changes
+5. Run tests: `cargo test`
+6. Commit and push: `git commit -am "Add feature" && git push`
+7. Create a Pull Request
 
 ## License
 
-This project is licensed under the MIT License - see the LICENSE file for details.
+MIT License - see the [LICENSE](LICENSE) file for details.
 
-## Design Philosophy
+## Support
 
-FlowLang is inspired by:
-- **Python** – Clean and readable syntax
-- **Dart** – Modern tooling and package support
-- **Rust** – Safety-first, compiled and efficient
-- **Swift** – Human-friendly and expressive
-- **JavaScript** – Flexibility and ease of use
+- **Documentation**: [docs/](docs/)
+- **Issues**: [GitHub Issues](https://github.com/flowlang/flowlang/issues)
+- **Discussions**: [GitHub Discussions](https://github.com/flowlang/flowlang/discussions)
 
-Our goal is to create the most learnable, buildable, and secure language of the modern era.
+## Roadmap
+
+- [ ] Package manager and module system
+- [ ] Standard library expansion
+- [ ] Language server protocol (LSP) support
+- [ ] Debugger integration
+- [ ] WebAssembly compilation target
+- [ ] More editor integrations
+
+---
+
+**FlowLang v0.1.0-beta** - A programming language designed for humans ❤️

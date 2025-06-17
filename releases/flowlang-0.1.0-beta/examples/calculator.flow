@@ -1,0 +1,42 @@
+# Simple Calculator in FlowLang
+
+# Define basic arithmetic functions
+def add with a, b do
+    return a + b
+end
+
+def subtract with a, b do
+    return a - b
+end
+
+def multiply with a, b do
+    return a * b
+end
+
+def divide with a, b do
+    if b == 0 then
+        show "Error: Division by zero!"
+        return 0
+    else
+        return a / b
+    end
+end
+
+# Test the calculator
+let x be 10
+let y be 3
+
+show "Calculator Demo:"
+show "x = " + x
+show "y = " + y
+show ""
+
+show "x + y = " + add(x, y)
+show "x - y = " + subtract(x, y)
+show "x * y = " + multiply(x, y)
+show "x / y = " + divide(x, y)
+
+# Test division by zero
+show ""
+show "Testing division by zero:"
+let result be divide(10, 0)

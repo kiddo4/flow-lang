@@ -1,0 +1,56 @@
+# FlowLang Collections Example
+# Demonstrates arrays and objects
+
+# Array examples
+let numbers be [1, 2, 3, 4, 5]
+show "Array:"
+show numbers
+show "Array length:"
+show numbers.length
+
+# Array indexing
+show "First element:"
+show numbers[0]
+show "Last element:"
+show numbers[4]
+
+# Object examples
+let person be {
+    "name": "Alice",
+    "age": 30,
+    "active": true
+}
+show "Object:"
+show person
+
+# Property access
+show "Name:"
+show person.name
+show "Age:"
+show person["age"]
+
+# Nested collections
+let data be {
+    "users": [
+        {"name": "Alice", "score": 95},
+        {"name": "Bob", "score": 87}
+    ],
+    "total": 2
+}
+show "Nested data:"
+show data
+show "First user:"
+show data.users[0]
+show "First user name:"
+show data.users[0].name
+
+# Mixed array
+let mixed be ["hello", 42, true, {"key": "value"}]
+show "Mixed array:"
+show mixed
+show "String element:"
+show mixed[0]
+show "Object element:"
+show mixed[3]
+show "Object property:"
+show mixed[3].key

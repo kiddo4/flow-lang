@@ -1,0 +1,3 @@
+show "Hello World"
+let x be 5
+show x

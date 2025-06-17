@@ -1,0 +1,64 @@
+{
+  "files.associations": {
+    "*.flow": "flowlang"
+  },
+  "editor.semanticHighlighting.enabled": true,
+  "editor.tokenColorCustomizations": {
+    "textMateRules": [
+      {
+        "scope": "keyword.control",
+        "settings": {
+          "foreground": "#C586C0"
+        }
+      },
+      {
+        "scope": "storage.type",
+        "settings": {
+          "foreground": "#569CD6"
+        }
+      },
+      {
+        "scope": "support.function",
+        "settings": {
+          "foreground": "#DCDCAA"
+        }
+      },
+      {
+        "scope": "string.quoted.double",
+        "settings": {
+          "foreground": "#CE9178"
+        }
+      },
+      {
+        "scope": "constant.numeric",
+        "settings": {
+          "foreground": "#B5CEA8"
+        }
+      },
+      {
+        "scope": "comment.line.number-sign",
+        "settings": {
+          "foreground": "#6A9955"
+        }
+      },
+      {
+        "scope": "entity.name.function",
+        "settings": {
+          "foreground": "#DCDCAA"
+        }
+      },
+      {
+        "scope": "constant.language",
+        "settings": {
+          "foreground": "#569CD6"
+        }
+      },
+      {
+        "scope": "keyword.operator",
+        "settings": {
+          "foreground": "#D4D4D4"
+        }
+      }
+    ]
+  }
+}

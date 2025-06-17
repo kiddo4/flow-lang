@@ -1,0 +1,10 @@
+# starter file for flow 
+
+# show to write or print something 
+
+
+
+let name be "franklin"
+
+show "Hello, world! " + name
+#show name
