@@ -16,7 +16,7 @@ A modern, human-friendly, and secure programming language designed to make softw
 ### Download Pre-built Release (Recommended)
 
 1. **Download the latest release**:
-   - Go to [Releases](https://github.com/flowlang/flowlang/releases)
+   - Go to [Releases](https://github.com/kiddo4/flowlang/releases)
    - Download `flowlang-0.1.0-beta.tar.gz` or `flowlang-0.1.0-beta.zip`
    - Extract the archive
 
@@ -105,16 +105,16 @@ flowlang --bytecode file.flow # Show bytecode (debug)
 
 ```flowlang
 # Variables
-let name = "FlowLang"
-let version = 0.1
-let is_beta = true
+let name be "FlowLang"
+let version be 0.1
+let is_beta be true
 
 # Arrays
-let numbers = [1, 2, 3, 4, 5]
-let mixed = ["hello", 42, true]
+let numbers be [1, 2, 3, 4, 5]
+let mixed be ["hello", 42, true]
 
 # Objects
-let person = {
+let person be {
     name: "Alice",
     age: 30,
     active: true
