@@ -16,7 +16,7 @@ A modern, human-friendly, and secure programming language designed to make softw
 ### Download Pre-built Release (Recommended)
 
 1. **Download the latest release**:
-   - Go to [Releases](https://github.com/kiddo4/flowlang/releases)
+   - Go to [Releases](https://github.com/kiddo4/flow-lang/releases)
    - Download `flowlang-0.1.0-beta.tar.gz` or `flowlang-0.1.0-beta.zip`
    - Extract the archive
 
