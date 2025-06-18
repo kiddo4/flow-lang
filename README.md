@@ -136,7 +136,7 @@ end
 
 # Function calls
 greet("Developer")
-let result = add(5, 3)
+let result be add(5, 3)
 ```
 
 ### Control Flow
