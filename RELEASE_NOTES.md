@@ -35,7 +35,7 @@ FlowLang is a modern, human-friendly, and secure programming language designed t
 1. **Download the release package:**
    ```bash
    # Download from GitHub releases
-   wget https://github.com/flowlang/flowlang/releases/download/v0.1.0-beta/flowlang-0.1.0-beta.tar.gz
+   wget https://github.com/kiddo4/flowlang/releases/download/v0.1.0-beta/flowlang-0.1.0-beta.tar.gz
    tar -xzf flowlang-0.1.0-beta.tar.gz
    cd flowlang-0.1.0-beta
    ```
@@ -65,7 +65,7 @@ FlowLang is a modern, human-friendly, and secure programming language designed t
 
 #### Build from Source
 ```bash
-git clone https://github.com/flowlang/flowlang.git
+git clone https://github.com/kiddo4/flowlang.git
 cd flowlang
 cargo build --release
 sudo cp target/release/flowlang /usr/local/bin/
@@ -83,11 +83,11 @@ sudo cp target/release/flowlang /usr/local/bin/
 | Platform | Architecture | Status | Binary Name |
 |----------|-------------|--------|-------------|
 | macOS | x86_64 | ✅ Supported | `flowlang-macos-x86_64` |
-| macOS | ARM64 | 🚧 Planned | `flowlang-macos-arm64` |
-| Linux | x86_64 | 🚧 Cross-compile | `flowlang-linux-x86_64` |
-| Windows | x86_64 | 🚧 Cross-compile | `flowlang-windows-x86_64.exe` |
+| macOS | ARM64 | ✅ Supported | `flowlang-macos-arm64` |
+| Linux | x86_64 | ⚠️ Build Required | `flowlang-linux-x86_64` |
+| Windows | x86_64 | ✅ Supported | `flowlang-windows-x86_64.exe` |
 
-**Note:** Cross-compilation targets are available but require additional setup. The current release includes native macOS binaries.
+**Note:** Pre-built binaries are provided for macOS and Windows. Linux support requires building from source due to cross-compilation toolchain limitations.
 
 ## 📝 Usage Examples
 
@@ -223,7 +223,7 @@ We welcome contributions! See our [Contributing Guide](CONTRIBUTING.md) for deta
 
 ### Development Setup
 1. Fork the repository
-2. Clone: `git clone https://github.com/yourusername/flowlang.git`
+2. Clone: `git clone https://github.com/kiddo4/flowlang.git`
 3. Build: `cargo build --release`
 4. Test: `cargo test`
 5. Submit a Pull Request

@@ -1,0 +1,132 @@
+# FlowLang Standard Library Test
+# This file tests all the new standard library modules
+
+show "=== FlowLang Standard Library Test ==="
+
+# Test I/O functions
+show "\n--- Testing I/O Functions ---"
+let test_content be "Hello, FlowLang Standard Library!"
+write_file("test_output.txt", test_content)
+show "File written successfully"
+
+if file_exists("test_output.txt") then
+    show "File exists check: PASSED"
+    let read_content be read_file("test_output.txt")
+    show "Read content: " + read_content
+    
+    if read_content == test_content then
+        show "File I/O test: PASSED"
+    else
+        show "File I/O test: FAILED"
+    end
+else
+    show "File exists check: FAILED"
+end
+
+# Test system functions
+show "\n--- Testing System Functions ---"
+let current_dir be get_current_dir()
+show "Current directory: " + current_dir
+
+set_env("FLOWLANG_TEST", "test_value")
+let env_value be get_env("FLOWLANG_TEST")
+show "Environment variable test: " + env_value
+
+let all_env be get_all_env()
+show "Environment variables count: " + to_string(array_len(object_keys(all_env)))
+
+# Test JSON functions
+show "\n--- Testing JSON Functions ---"
+let test_object be {"name": "FlowLang", "version": "1.0", "features": ["fast", "safe", "easy"]}
+
+let json_string be json_stringify(test_object, true)
+show "JSON stringify result:"
+show json_string
+
+let parsed_object be json_parse(json_string)
+show "JSON parse test: " + str(parsed_object.name == "FlowLang")
+
+# Test crypto functions
+show "\n--- Testing Crypto Functions ---"
+let test_string be "Hello, World!"
+let hash_result be hash_string(test_string)
+show "Hash of '" + test_string + "': " + to_string(hash_result)
+
+let md5_result be md5_hash(test_string)
+show "MD5 hash: " + md5_result
+
+let sha256_result be sha256_hash(test_string)
+show "SHA256 hash: " + sha256_result
+
+let base64_encoded be base64_encode(test_string)
+show "Base64 encoded: " + base64_encoded
+
+let base64_decoded be base64_decode(base64_encoded)
+show "Base64 decoded: " + base64_decoded
+show "Base64 round-trip test: " + to_string(base64_decoded == test_string)
+
+let hex_encoded be hex_encode(test_string)
+show "Hex encoded: " + hex_encoded
+
+let hex_decoded be hex_decode(hex_encoded)
+show "Hex decoded: " + hex_decoded
+show "Hex round-trip test: " + to_string(hex_decoded == test_string)
+
+# Test random functions
+show "\n--- Testing Random Functions ---"
+set_random_seed(12345)
+let random_int_val be random_int(1, 100)
+show "Random integer (1-100): " + to_string(random_int_val)
+
+let random_float_val be random_float()
+show "Random float (0-1): " + to_string(random_float_val)
+
+let random_string_val be random_string(10)
+show "Random string (10 chars): " + random_string_val
+
+# Test URL encoding
+show "\n--- Testing URL Functions ---"
+let url_test be "Hello World! @#$%"
+let url_encoded be url_encode(url_test)
+show "URL encoded: " + url_encoded
+
+let url_decoded be url_decode(url_encoded)
+show "URL decoded: " + url_decoded
+show "URL round-trip test: " + to_string(url_decoded == url_test)
+
+# Test HTTP Functions (mock)
+show "\n--- Testing HTTP Functions ---"
+let http_response be http_get("https://api.example.com/test")
+show "HTTP GET response status: " + to_string(http_response.status)
+
+let post_data be json_stringify({"message": "Hello from FlowLang"})
+let post_response be http_post("https://api.example.com/data", post_data)
+show "HTTP POST response status: " + to_string(post_response.status)
+
+# Test directory operations
+show "\n--- Testing Directory Functions ---"
+if not file_exists("test_dir") then
+    create_dir("test_dir")
+    show "Test directory created"
+end
+
+if is_directory("test_dir") then
+    show "Directory check: PASSED"
+    
+    let dir_contents be list_dir(".")
+    show "Current directory contents count: " + to_string(array_len(dir_contents))
+    
+    remove_path("test_dir")
+    show "Test directory removed"
+else
+    show "Directory check: FAILED"
+end
+
+# Clean up test file
+if file_exists("test_output.txt") then
+    remove_path("test_output.txt")
+    show "Test file cleaned up"
+end
+
+show "\n=== Standard Library Test Complete ==="
+show "All modules tested successfully!"

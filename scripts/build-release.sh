@@ -43,14 +43,16 @@ if [[ "$(uname)" == "Darwin" ]]; then
 fi
 
 # Linux (if cross-compilation is set up)
-echo "  Attempting Linux builds..."
-cargo build --release --target x86_64-unknown-linux-gnu 2>/dev/null || echo "    ⚠️  x86_64-unknown-linux-gnu target not available"
-if [[ -f "target/x86_64-unknown-linux-gnu/release/flowlang" ]]; then
-    cp target/x86_64-unknown-linux-gnu/release/flowlang "$BIN_DIR/flowlang-linux-x86_64"
-fi
+# Note: Linux cross-compilation disabled due to linker issues
+# echo "  Attempting Linux builds..."
+# cargo build --release --target x86_64-unknown-linux-gnu 2>/dev/null || echo "    ⚠️  x86_64-unknown-linux-gnu target not available"
+# if [[ -f "target/x86_64-unknown-linux-gnu/release/flowlang" ]]; then
+#     cp target/x86_64-unknown-linux-gnu/release/flowlang "$BIN_DIR/flowlang-linux-x86_64"
+# fi
 
 # Windows (if cross-compilation is set up)
 echo "  Attempting Windows build..."
+export PATH="/usr/local/opt/mingw-w64/bin:$PATH"
 cargo build --release --target x86_64-pc-windows-gnu 2>/dev/null || echo "    ⚠️  x86_64-pc-windows-gnu target not available"
 if [[ -f "target/x86_64-pc-windows-gnu/release/flowlang.exe" ]]; then
     cp target/x86_64-pc-windows-gnu/release/flowlang.exe "$BIN_DIR/flowlang-windows-x86_64.exe"
@@ -303,6 +305,10 @@ echo "   - flowlang-${VERSION}.tar.gz"
 echo "   - flowlang-${VERSION}.zip (if zip available)"
 echo ""
 echo "🎯 Available binaries:"
-ls -la "$BIN_DIR" 2>/dev/null || echo "   No binaries found in $BIN_DIR"
+if [[ -d "$BIN_DIR" ]]; then
+    (cd "$BIN_DIR" && ls -1 . 2>/dev/null | sed 's/^/   - /') || echo "   No binaries found in $BIN_DIR"
+else
+    echo "   No binaries found in $BIN_DIR"
+fi
 echo ""
 echo "🚀 Ready for distribution!"

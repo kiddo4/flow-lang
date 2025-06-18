@@ -1,0 +1,44 @@
+# Fibonacci Sequence in FlowLang
+
+# Recursive fibonacci function
+def fibonacci with n do
+    if n <= 1 then
+        return n
+    else
+        return fibonacci(n - 1) + fibonacci(n - 2)
+    end
+end
+
+# Iterative fibonacci function (more efficient)
+def fibonacci_iterative with n do
+    if n <= 1 then
+        return n
+    end
+
+    let a be 0
+    let b be 1
+    let i be 2
+
+    while i <= n do
+        let temp be a + b
+        let a be b
+        let b be temp
+        let i be i + 1
+    end
+
+    return b
+end
+
+show "Fibonacci sequence (first 15 numbers):"
+show ""
+
+show "Using recursive approach:"
+for i from 0 to 14 do
+    show "fib(" + i + ") = " + fibonacci(i)
+end
+
+show ""
+show "Using iterative approach:"
+for i from 0 to 14 do
+    show "fib(" + i + ") = " + fibonacci_iterative(i)
+end

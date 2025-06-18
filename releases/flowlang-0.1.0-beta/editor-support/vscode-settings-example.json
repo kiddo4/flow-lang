@@ -1,0 +1,34 @@
+{
+  "// FlowLang Development Settings for VS Code": "",
+  "// Copy these settings to your VS Code settings.json for optimal FlowLang development": "",
+  "[flowlang]": {
+    "editor.tabSize": 4,
+    "editor.insertSpaces": true,
+    "editor.detectIndentation": false,
+    "editor.formatOnSave": true,
+    "editor.formatOnPaste": true,
+    "editor.autoIndent": "full",
+    "editor.bracketPairColorization.enabled": true,
+    "editor.guides.bracketPairs": true,
+    "editor.wordWrap": "off",
+    "editor.rulers": [
+      80,
+      120
+    ],
+    "editor.trimAutoWhitespace": true
+  },
+  "files.associations": {
+    "*.flow": "flowlang"
+  },
+  "// Optional: File icon theme for .flow files": "",
+  "workbench.iconTheme": "material-icon-theme",
+  "// Optional: Color theme that works well with FlowLang syntax": "",
+  "workbench.colorTheme": "One Dark Pro",
+  "// Auto-save for better development experience": "",
+  "files.autoSave": "onFocusChange",
+  "// Show whitespace for better code formatting": "",
+  "editor.renderWhitespace": "boundary",
+  "// Enable minimap for larger FlowLang files": "",
+  "editor.minimap.enabled": true,
+  "editor.minimap.maxColumn": 120
+}

@@ -1,0 +1,7 @@
+import std { write_file as wf, read_file as rf }
+show "Testing function aliases"
+wf("debug.txt", "test content")
+show "File written successfully"
+let result be rf("debug.txt")
+show "Read result: " + result
+show "Result type: " + result.to_string()

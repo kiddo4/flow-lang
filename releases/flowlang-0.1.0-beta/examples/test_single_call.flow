@@ -1,0 +1,3 @@
+show "Testing single function call"
+let result be to_string(42)
+show result
