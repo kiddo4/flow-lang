@@ -128,7 +128,7 @@ pub fn parse(source: &str) -> Result<Program> {
 ///
 /// # Returns
 ///
-/// * `Result<Vec<Token>>` - The tokenized source or an error
+/// * `Result<Vec<TokenWithPos>>` - The tokenized source or an error
 ///
 /// # Example
 ///
@@ -138,7 +138,7 @@ pub fn parse(source: &str) -> Result<Program> {
 /// let tokens = tokenize("let x be 42").unwrap();
 /// assert!(!tokens.is_empty());
 /// ```
-pub fn tokenize(source: &str) -> Result<Vec<Token>> {
+pub fn tokenize(source: &str) -> Result<Vec<TokenWithPos>> {
     let mut lexer = Lexer::new(source);
     lexer.tokenize()
 }

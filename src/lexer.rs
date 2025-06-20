@@ -1,6 +1,13 @@
 use crate::error::{FlowError, Result};
 
 #[derive(Debug, Clone, PartialEq)]
+pub struct TokenWithPos {
+    pub token: Token,
+    pub line: usize,
+    pub column: usize,
+}
+
+#[derive(Debug, Clone, PartialEq)]
 pub enum Token {
     // Literals
     String(String),
@@ -90,7 +97,7 @@ impl Lexer {
         }
     }
     
-    pub fn tokenize(&mut self) -> Result<Vec<Token>> {
+    pub fn tokenize(&mut self) -> Result<Vec<TokenWithPos>> {
         let mut tokens = Vec::new();
         
         while !self.is_at_end() {
@@ -106,11 +113,17 @@ impl Lexer {
                 continue;
             }
             
+            let line = self.line;
+            let column = self.column;
             let token = self.next_token()?;
-            tokens.push(token);
+            tokens.push(TokenWithPos { token, line, column });
         }
         
-        tokens.push(Token::Eof);
+        tokens.push(TokenWithPos { 
+            token: Token::Eof, 
+            line: self.line, 
+            column: self.column 
+        });
         Ok(tokens)
     }
     

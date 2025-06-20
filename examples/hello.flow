@@ -11,3 +11,5 @@ let x be 42
 let y be 3.14
 show "The answer is " + x
 show "Pi is approximately " + y
+
+print(x)

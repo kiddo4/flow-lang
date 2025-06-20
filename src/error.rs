@@ -10,11 +10,11 @@ pub enum FlowError {
         message: String,
     },
 
-    #[error("Parser error: {message}")]
-    ParserError { message: String },
+    #[error("Parser error at line {line}: {message}")]
+    ParserError { line: usize, message: String },
 
-    #[error("Runtime error: {message}")]
-    RuntimeError { message: String },
+    #[error("Runtime error at line {line}: {message}")]
+    RuntimeError { line: usize, message: String },
 
     #[error("Type error: {message}")]
     TypeError { message: String },
@@ -52,12 +52,28 @@ impl FlowError {
 
     pub fn parser_error(message: impl Into<String>) -> Self {
         FlowError::ParserError {
+            line: 0, // Default to 0 when line info not available
+            message: message.into(),
+        }
+    }
+
+    pub fn parser_error_at_line(line: usize, message: impl Into<String>) -> Self {
+        FlowError::ParserError {
+            line,
             message: message.into(),
         }
     }
 
     pub fn runtime_error(message: impl Into<String>) -> Self {
         FlowError::RuntimeError {
+            line: 0, // Default to 0 when line info not available
+            message: message.into(),
+        }
+    }
+
+    pub fn runtime_error_at_line(line: usize, message: impl Into<String>) -> Self {
+        FlowError::RuntimeError {
+            line,
             message: message.into(),
         }
     }
@@ -88,6 +104,7 @@ impl FlowError {
 
     pub fn compilation_error(message: &str) -> Self {
         FlowError::RuntimeError {
+            line: 0,
             message: format!("Compilation error: {}", message),
         }
     }

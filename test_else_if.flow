@@ -1,0 +1,17 @@
+# Test else-if functionality
+let x be 5
+
+if x == 1 then
+    show "x is 1"
+else if x == 2 then
+    show "x is 2"
+else if x == 5 then
+    show "x is 5"
+else
+    show "x is something else"
+end
+
+# Test print vs show
+show "This is show (with newline)"
+print("This is print (no newline)")
+show "After print"

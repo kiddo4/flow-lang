@@ -27,7 +27,9 @@
     "vscode": "^1.74.0"
   },
   "categories": [
-    "Programming Languages"
+    "Programming Languages",
+    "Linters",
+    "Other"
   ],
   "activationEvents": [
     "onLanguage:flowlang"
@@ -57,7 +59,59 @@
         "scopeName": "source.flowlang",
         "path": "./syntaxes/flowlang.tmLanguage.json"
       }
-    ]
+    ],
+    "commands": [
+      {
+        "command": "flowlang.checkSyntax",
+        "title": "Check FlowLang Syntax",
+        "category": "FlowLang"
+      },
+      {
+        "command": "flowlang.formatDocument",
+        "title": "Format FlowLang Document",
+        "category": "FlowLang"
+      }
+    ],
+    "menus": {
+      "editor/context": [
+        {
+          "when": "resourceLangId == flowlang",
+          "command": "flowlang.checkSyntax",
+          "group": "flowlang"
+        },
+        {
+          "when": "resourceLangId == flowlang",
+          "command": "flowlang.formatDocument",
+          "group": "flowlang"
+        }
+      ]
+    },
+    "configuration": {
+      "type": "object",
+      "title": "FlowLang",
+      "properties": {
+        "flowlang.enableDiagnostics": {
+          "type": "boolean",
+          "default": true,
+          "description": "Enable real-time error checking and diagnostics"
+        },
+        "flowlang.enableCodeCompletion": {
+          "type": "boolean",
+          "default": true,
+          "description": "Enable code completion and suggestions"
+        },
+        "flowlang.interpreterPath": {
+          "type": "string",
+          "default": "flowlang",
+          "description": "Path to the FlowLang interpreter executable"
+        },
+        "flowlang.maxNumberOfProblems": {
+          "type": "number",
+          "default": 100,
+          "description": "Maximum number of problems to report"
+        }
+      }
+    }
   },
   "scripts": {
     "package": "vsce package",

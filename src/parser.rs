@@ -1,15 +1,25 @@
 use crate::ast::*;
 use crate::error::{FlowError, Result};
-use crate::lexer::Token;
+use crate::lexer::{Token, TokenWithPos};
 
 pub struct Parser {
-    tokens: Vec<Token>,
+    tokens: Vec<TokenWithPos>,
     current: usize,
 }
 
 impl Parser {
-    pub fn new(tokens: Vec<Token>) -> Self {
+    pub fn new(tokens: Vec<TokenWithPos>) -> Self {
         Self { tokens, current: 0 }
+    }
+    
+    fn current_line(&self) -> usize {
+        if self.current < self.tokens.len() {
+            self.tokens[self.current].line
+        } else if !self.tokens.is_empty() {
+            self.tokens[self.tokens.len() - 1].line
+        } else {
+            1
+        }
     }
     
     pub fn parse(&mut self) -> Result<Program> {
@@ -29,7 +39,7 @@ impl Parser {
     }
     
     fn statement(&mut self) -> Result<Statement> {
-        match &self.peek() {
+        match &self.peek().token {
             Token::Let => self.variable_declaration(),
             Token::Def => self.function_declaration(),
             Token::If => self.if_statement(),
@@ -53,7 +63,10 @@ impl Parser {
         
         let name = match self.advance() {
             Token::Identifier(name) => name.clone(),
-            _ => return Err(FlowError::parser_error("Expected variable name")),
+            _ => {
+                let line = self.current_line();
+                return Err(FlowError::parser_error_at_line(line, "Expected variable name"));
+            }
         };
         
         self.consume(&Token::Be, "Expected 'be' after variable name")?;
@@ -69,7 +82,10 @@ impl Parser {
         
         let name = match self.advance() {
             Token::Identifier(name) => name.clone(),
-            _ => return Err(FlowError::parser_error("Expected function name")),
+            _ => {
+                let line = self.current_line();
+                return Err(FlowError::parser_error_at_line(line, "Expected function name"));
+            }
         };
         
         let mut parameters = Vec::new();
@@ -88,7 +104,10 @@ impl Parser {
                 
                 let param_name = match self.advance() {
                     Token::Identifier(param) => param.clone(),
-                    _ => return Err(FlowError::parser_error("Expected parameter name")),
+                    _ => {
+                        let line = self.current_line();
+                        return Err(FlowError::parser_error_at_line(line, "Expected parameter name"));
+                    }
                 };
                 
                 // Check for default value
@@ -136,6 +155,10 @@ impl Parser {
     }
     
     fn if_statement(&mut self) -> Result<Statement> {
+        self.if_statement_internal(true)
+    }
+    
+    fn if_statement_internal(&mut self, consume_end: bool) -> Result<Statement> {
         self.consume(&Token::If, "Expected 'if'")?;
         
         let condition = self.expression()?;
@@ -157,8 +180,9 @@ impl Parser {
             
             // Check for 'else if'
             if self.check(&Token::If) {
-                let else_if = self.if_statement()?;
-                Some(vec![else_if])
+                // Parse else-if as a nested if statement without consuming end
+                let else_if_stmt = self.if_statement_internal(false)?;
+                Some(vec![else_if_stmt])
             } else {
                 self.consume_newline()?;
                 let mut else_stmts = Vec::new();
@@ -175,8 +199,10 @@ impl Parser {
             None
         };
         
-        self.consume(&Token::End, "Expected 'end' to close if statement")?;
-        self.consume_newline_or_eof()?;
+        if consume_end {
+            self.consume(&Token::End, "Expected 'end' to close if statement")?;
+            self.consume_newline_or_eof()?;
+        }
         
         Ok(Statement::If {
             condition,
@@ -213,7 +239,10 @@ impl Parser {
         
         let variable = match self.advance() {
             Token::Identifier(name) => name.clone(),
-            _ => return Err(FlowError::parser_error("Expected variable name in for loop")),
+            _ => {
+                let line = self.current_line();
+                return Err(FlowError::parser_error_at_line(line, "Expected variable name in for loop"));
+            }
         };
         
         self.consume(&Token::From, "Expected 'from' in for loop")?;
@@ -270,7 +299,10 @@ impl Parser {
         
         let module_path = match self.advance() {
             Token::Identifier(name) => name.clone(),
-            _ => return Err(FlowError::parser_error("Expected module name")),
+            _ => {
+                let line = self.current_line();
+                return Err(FlowError::parser_error_at_line(line, "Expected module name"));
+            }
         };
         
         let imports = if self.check(&Token::LeftBrace) {
@@ -281,14 +313,20 @@ impl Parser {
             loop {
                 let func_name = match self.advance() {
                     Token::Identifier(name) => name.clone(),
-                    _ => return Err(FlowError::parser_error("Expected function name")),
+                    _ => {
+                        let line = self.current_line();
+                        return Err(FlowError::parser_error_at_line(line, "Expected function name"));
+                    }
                 };
                 
                 if self.check(&Token::As) {
                     self.advance(); // consume 'as'
                     let alias = match self.advance() {
                         Token::Identifier(name) => name.clone(),
-                        _ => return Err(FlowError::parser_error("Expected alias name")),
+                        _ => {
+                            let line = self.current_line();
+                            return Err(FlowError::parser_error_at_line(line, "Expected alias name"));
+                        }
                     };
                     specific_imports.push((func_name, alias));
                 } else {
@@ -319,7 +357,10 @@ impl Parser {
             self.advance(); // consume 'as'
             let alias = match self.advance() {
                 Token::Identifier(name) => name.clone(),
-                _ => return Err(FlowError::parser_error("Expected alias name")),
+                _ => {
+                    let line = self.current_line();
+                    return Err(FlowError::parser_error_at_line(line, "Expected alias name"));
+                }
             };
             ImportType::Aliased(module_path.clone(), alias)
         } else {
@@ -354,7 +395,10 @@ impl Parser {
         
         let catch_variable = match self.advance() {
             Token::Identifier(name) => name.clone(),
-            _ => return Err(FlowError::parser_error("Expected error variable name")),
+            _ => {
+                let line = self.current_line();
+                return Err(FlowError::parser_error_at_line(line, "Expected error variable name"));
+            }
         };
         
         self.consume_newline()?;
@@ -417,7 +461,7 @@ impl Parser {
     fn equality(&mut self) -> Result<Expression> {
         let mut expr = self.comparison()?;
         
-        while matches!(self.peek(), Token::Equal | Token::NotEqual) {
+        while matches!(self.peek().token, Token::Equal | Token::NotEqual) {
             let operator = match self.advance() {
                 Token::Equal => BinaryOperator::Equal,
                 Token::NotEqual => BinaryOperator::NotEqual,
@@ -437,7 +481,7 @@ impl Parser {
     fn comparison(&mut self) -> Result<Expression> {
         let mut expr = self.term()?;
         
-        while matches!(self.peek(), Token::Greater | Token::GreaterEqual | Token::Less | Token::LessEqual) {
+        while matches!(self.peek().token, Token::Greater | Token::GreaterEqual | Token::Less | Token::LessEqual) {
             let operator = match self.advance() {
                 Token::Greater => BinaryOperator::Greater,
                 Token::GreaterEqual => BinaryOperator::GreaterEqual,
@@ -459,7 +503,7 @@ impl Parser {
     fn term(&mut self) -> Result<Expression> {
         let mut expr = self.factor()?;
         
-        while matches!(self.peek(), Token::Plus | Token::Minus) {
+        while matches!(self.peek().token, Token::Plus | Token::Minus) {
             let operator = match self.advance() {
                 Token::Plus => BinaryOperator::Add,
                 Token::Minus => BinaryOperator::Subtract,
@@ -479,7 +523,7 @@ impl Parser {
     fn factor(&mut self) -> Result<Expression> {
         let mut expr = self.unary()?;
         
-        while matches!(self.peek(), Token::Multiply | Token::Divide | Token::Modulo) {
+        while matches!(self.peek().token, Token::Multiply | Token::Divide | Token::Modulo) {
             let operator = match self.advance() {
                 Token::Multiply => BinaryOperator::Multiply,
                 Token::Divide => BinaryOperator::Divide,
@@ -498,7 +542,7 @@ impl Parser {
     }
     
     fn unary(&mut self) -> Result<Expression> {
-        if matches!(self.peek(), Token::Not | Token::Minus) {
+        if matches!(self.peek().token, Token::Not | Token::Minus) {
             let operator = match self.advance() {
                 Token::Not => UnaryOperator::Not,
                 Token::Minus => UnaryOperator::Minus,
@@ -540,14 +584,18 @@ impl Parser {
                         expr = Expression::FunctionCall { name, arguments };
                     }
                     _ => {
-                        return Err(FlowError::parser_error("Invalid function call"));
+                        let line = self.current_line();
+                        return Err(FlowError::parser_error_at_line(line, "Invalid function call"));
                     }
                 }
             } else if self.check(&Token::Dot) {
                 self.advance();
                 let property = match self.advance() {
                     Token::Identifier(name) => name.clone(),
-                    _ => return Err(FlowError::parser_error("Expected property name after '.'")),
+                    _ => {
+                        let line = self.current_line();
+                        return Err(FlowError::parser_error_at_line(line, "Expected property name after '.'"));
+                    },
                 };
                 
                 if self.check(&Token::LeftParen) {
@@ -622,7 +670,10 @@ impl Parser {
             }
             Token::LeftBracket => self.parse_array(),
             Token::LeftBrace => self.parse_object(),
-            _ => Err(FlowError::parser_error("Expected expression")),
+            _ => {
+                let line = self.current_line();
+                Err(FlowError::parser_error_at_line(line, "Expected expression"))
+            }
         }
     }
 
@@ -678,7 +729,7 @@ impl Parser {
                     break;
                 }
                 
-                let key = match self.peek() {
+                let key = match &self.peek().token {
                     Token::String(s) => {
                         let key = s.clone();
                         self.advance();
@@ -689,7 +740,10 @@ impl Parser {
                         self.advance();
                         key
                     }
-                    _ => return Err(FlowError::parser_error("Expected string or identifier as object key")),
+                    _ => {
+                        let line = self.current_line();
+                        return Err(FlowError::parser_error_at_line(line, "Expected string or identifier as object key"));
+                    }
                 };
                 
                 self.consume(&Token::Colon, "Expected ':' after object key")?;
@@ -724,7 +778,7 @@ impl Parser {
         
         // Skip to the matching ')'
         while pos < self.tokens.len() && paren_count > 0 {
-            match &self.tokens[pos] {
+            match &self.tokens[pos].token {
                 Token::LeftParen => paren_count += 1,
                 Token::RightParen => paren_count -= 1,
                 _ => {}
@@ -733,7 +787,7 @@ impl Parser {
         }
         
         // Check if the next token after ')' is '=>'
-        pos < self.tokens.len() && matches!(self.tokens[pos], Token::Arrow)
+        pos < self.tokens.len() && matches!(self.tokens[pos].token, Token::Arrow)
     }
     
     fn parse_lambda(&mut self) -> Result<Expression> {
@@ -753,7 +807,10 @@ impl Parser {
                 
                 let param_name = match self.advance() {
                     Token::Identifier(name) => name.clone(),
-                    _ => return Err(FlowError::parser_error("Expected parameter name")),
+                    _ => {
+                        let line = self.current_line();
+                        return Err(FlowError::parser_error_at_line(line, "Expected parameter name"));
+                    }
                 };
                 
                 // Check for default value
@@ -790,7 +847,8 @@ impl Parser {
         if self.check(expected) {
             Ok(self.advance())
         } else {
-            Err(FlowError::parser_error(message))
+            let line = self.current_line();
+            Err(FlowError::parser_error_at_line(line, message))
         }
     }
     
@@ -799,7 +857,8 @@ impl Parser {
             self.advance();
             Ok(())
         } else {
-            Err(FlowError::parser_error("Expected newline"))
+            let line = self.current_line();
+            Err(FlowError::parser_error_at_line(line, "Expected newline"))
         }
     }
     
@@ -810,30 +869,31 @@ impl Parser {
             }
             Ok(())
         } else {
-            Err(FlowError::parser_error("Expected newline or end of file"))
+            let line = self.current_line();
+            Err(FlowError::parser_error_at_line(line, "Expected newline or end of file"))
         }
     }
     
     fn check(&self, token_type: &Token) -> bool {
-        std::mem::discriminant(self.peek()) == std::mem::discriminant(token_type)
+        std::mem::discriminant(&self.peek().token) == std::mem::discriminant(token_type)
     }
     
     fn advance(&mut self) -> &Token {
         if !self.is_at_end() {
             self.current += 1;
         }
-        self.previous()
+        &self.previous().token
     }
     
     fn is_at_end(&self) -> bool {
-        matches!(self.peek(), Token::Eof)
+        matches!(self.peek().token, Token::Eof)
     }
     
-    fn peek(&self) -> &Token {
+    fn peek(&self) -> &TokenWithPos {
         &self.tokens[self.current]
     }
     
-    fn previous(&self) -> &Token {
+    fn previous(&self) -> &TokenWithPos {
         &self.tokens[self.current - 1]
     }
 }

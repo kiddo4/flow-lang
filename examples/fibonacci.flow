@@ -1,44 +1,31 @@
-# Fibonacci Sequence in FlowLang
+# Number Guessing Game in FlowLang
 
-# Recursive fibonacci function
-def fibonacci with n do
-    if n <= 1 then
-        return n
-    else
-        return fibonacci(n - 1) + fibonacci(n - 2)
-    end
+show "Welcome to the Number Guessing Game!"
+show "I'm thinking of a number between 1 and 100. Can you guess it?"
+
+let secret_number be random(1, 100)
+let guess be 0
+let attempts be 0
+
+# while guess != secret_number do
+#     show "Enter your guess:"
+#     let guess be input()
+#     let attempts be attempts + 1
+#     if guess < secret_number then
+#         show "Too low! Try again."
+#     else
+#         if guess > secret_number then
+#             show "Too high! Try again."
+#         else
+#             show "Congratulations! You guessed the number in " + attempts + " attempts."
+#         end
+#     end
+# end
+
+def mad_lib with a, b, c do
+    show "The " + a + " jumped over the " + b + " and " + c + "."
 end
 
-# Iterative fibonacci function (more efficient)
-def fibonacci_iterative with n do
-    if n <= 1 then
-        return n
-    end
+mad_lib("cat", "dog", "mouse")
 
-    let a be 0
-    let b be 1
-    let i be 2
 
-    while i <= n do
-        let temp be a + b
-        let a be b
-        let b be temp
-        let i be i + 1
-    end
-
-    return b
-end
-
-show "Fibonacci sequence (first 15 numbers):"
-show ""
-
-show "Using recursive approach:"
-for i from 0 to 14 do
-    show "fib(" + i + ") = " + fibonacci(i)
-end
-
-show ""
-show "Using iterative approach:"
-for i from 0 to 14 do
-    show "fib(" + i + ") = " + fibonacci_iterative(i)
-end
