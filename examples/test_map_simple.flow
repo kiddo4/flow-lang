@@ -1,0 +1,13 @@
+# Simple map test
+
+let numbers be [1, 2, 3]
+show "Original:"
+show numbers
+
+let square be (x) => x * x
+show "Lambda:"
+show square
+
+let result be numbers.map(square)
+show "Mapped:"
+show result

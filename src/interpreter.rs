@@ -76,6 +76,7 @@ impl Interpreter {
             "random" => self.handle_random_import(imports),
             "url" => self.handle_url_import(imports),
             "dir" => self.handle_dir_import(imports),
+            "http" => self.handle_http_import(imports),
             _ => {
                 return Err(FlowError::runtime_error(format!("Unknown module: {}", module_path)));
             }
@@ -187,6 +188,11 @@ impl Interpreter {
         self.handle_module_import("dir", &dir_functions, imports)
     }
     
+    fn handle_http_import(&mut self, imports: &ImportType) -> Result<()> {
+        let http_functions = vec!["http_get", "http_post", "http_put", "http_delete"];
+        self.handle_module_import("http", &http_functions, imports)
+    }
+    
     fn handle_module_import(
         &mut self, 
         module_name: &str, 
@@ -195,6 +201,7 @@ impl Interpreter {
     ) -> Result<()> {
         match imports {
             ImportType::All => {
+                let mut module_obj = FlowObject::new();
                 for func_name in available_functions {
                     if self.stdlib.has_function(func_name) {
                         let func = Value::Function {
@@ -202,9 +209,10 @@ impl Interpreter {
                             parameters: vec![],
                             body: vec![],
                         };
-                        self.environment.define_variable(func_name.to_string(), func);
+                        module_obj.set(func_name.to_string(), func);
                     }
                 }
+                self.environment.define_variable(module_name.to_string(), Value::Object(module_obj));
                 Ok(())
             }
             ImportType::Specific(functions) => {
@@ -856,6 +864,173 @@ impl Interpreter {
                         } else {
                             Err(FlowError::type_error("slice() arguments must be integers".to_string()))
                         }
+                    }
+                    "map" => {
+                        if arguments.len() != 1 {
+                            return Err(FlowError::runtime_error("map() expects exactly 1 argument (function)".to_string()));
+                        }
+                        let func = self.evaluate_expression(&arguments[0])?;
+                        let mut result = Vec::new();
+                        
+                        for element in &arr.elements {
+                            let mapped_value = match &func {
+                                Value::Lambda { parameters, body, closure } => {
+                                    // Create new scope with closure
+                                    self.environment.push_scope();
+                                    
+                                    // Bind parameter
+                                    if !parameters.is_empty() {
+                                        self.environment.define_variable(parameters[0].name.clone(), element.clone());
+                                    }
+                                    
+                                    let result = self.evaluate_expression(body);
+                                    self.environment.pop_scope();
+                                    result?
+                                }
+                                _ => return Err(FlowError::type_error("map() argument must be a function".to_string()))
+                            };
+                            result.push(mapped_value);
+                        }
+                        
+                        Ok(Value::Array(FlowArray::from_values(result)))
+                    }
+                    "filter" => {
+                        if arguments.len() != 1 {
+                            return Err(FlowError::runtime_error("filter() expects exactly 1 argument (function)".to_string()));
+                        }
+                        let func = self.evaluate_expression(&arguments[0])?;
+                        let mut result = Vec::new();
+                        
+                        for element in &arr.elements {
+                            let should_include = match &func {
+                                Value::Lambda { parameters, body, closure } => {
+                                    // Create new scope with closure
+                                    self.environment.push_scope();
+                                    
+                                    // Bind parameter
+                                    if !parameters.is_empty() {
+                                        self.environment.define_variable(parameters[0].name.clone(), element.clone());
+                                    }
+                                    
+                                    let result = self.evaluate_expression(body);
+                                    self.environment.pop_scope();
+                                    result?
+                                }
+                                _ => return Err(FlowError::type_error("filter() argument must be a function".to_string()))
+                            };
+                            
+                            if should_include.is_truthy() {
+                                result.push(element.clone());
+                            }
+                        }
+                        
+                        Ok(Value::Array(FlowArray::from_values(result)))
+                    }
+                    "forEach" => {
+                        if arguments.len() != 1 {
+                            return Err(FlowError::runtime_error("forEach() expects exactly 1 argument (function)".to_string()));
+                        }
+                        let func = self.evaluate_expression(&arguments[0])?;
+                        
+                        for element in &arr.elements {
+                            match &func {
+                                Value::Lambda { parameters, body, closure } => {
+                                    // Create new scope with closure
+                                    self.environment.push_scope();
+                                    
+                                    // Bind parameter
+                                    if !parameters.is_empty() {
+                                        self.environment.define_variable(parameters[0].name.clone(), element.clone());
+                                    }
+                                    
+                                    let _ = self.evaluate_expression(body);
+                                    self.environment.pop_scope();
+                                }
+                                _ => return Err(FlowError::type_error("forEach() argument must be a function".to_string()))
+                            };
+                        }
+                        
+                        Ok(Value::Null)
+                    }
+                    "find" => {
+                        if arguments.len() != 1 {
+                            return Err(FlowError::runtime_error("find() expects exactly 1 argument (function)".to_string()));
+                        }
+                        let func = self.evaluate_expression(&arguments[0])?;
+                        
+                        for element in &arr.elements {
+                            let matches = match &func {
+                                Value::Lambda { parameters, body, closure } => {
+                                    // Create new scope with closure
+                                    self.environment.push_scope();
+                                    
+                                    // Bind parameter
+                                    if !parameters.is_empty() {
+                                        self.environment.define_variable(parameters[0].name.clone(), element.clone());
+                                    }
+                                    
+                                    let result = self.evaluate_expression(body);
+                                    self.environment.pop_scope();
+                                    result?
+                                }
+                                _ => return Err(FlowError::type_error("find() argument must be a function".to_string()))
+                            };
+                            
+                            if matches.is_truthy() {
+                                return Ok(element.clone());
+                            }
+                        }
+                        
+                        Ok(Value::Null)
+                    }
+                    "includes" => {
+                        if arguments.len() != 1 {
+                            return Err(FlowError::runtime_error("includes() expects exactly 1 argument".to_string()));
+                        }
+                        let value = self.evaluate_expression(&arguments[0])?;
+                        Ok(Value::Boolean(arr.contains(&value)))
+                    }
+                    "indexOf" => {
+                        if arguments.len() != 1 {
+                            return Err(FlowError::runtime_error("indexOf() expects exactly 1 argument".to_string()));
+                        }
+                        let value = self.evaluate_expression(&arguments[0])?;
+                        if let Some(index) = arr.index_of(&value) {
+                            Ok(Value::Integer(index as i64))
+                        } else {
+                            Ok(Value::Integer(-1))
+                        }
+                    }
+                    "join" => {
+                        let separator = if arguments.is_empty() {
+                            ",".to_string()
+                        } else if arguments.len() == 1 {
+                            let sep_val = self.evaluate_expression(&arguments[0])?;
+                            if let Value::String(s) = sep_val {
+                                s
+                            } else {
+                                return Err(FlowError::type_error("join() separator must be a string".to_string()));
+                            }
+                        } else {
+                            return Err(FlowError::runtime_error("join() expects 0 or 1 arguments".to_string()));
+                        };
+                        
+                        let strings: Vec<String> = arr.elements.iter().map(|v| v.to_string()).collect();
+                        Ok(Value::String(strings.join(&separator)))
+                    }
+                    "reverse" => {
+                        if !arguments.is_empty() {
+                            return Err(FlowError::runtime_error("reverse() expects no arguments".to_string()));
+                        }
+                        arr_copy.reverse();
+                        Ok(Value::Array(arr_copy))
+                    }
+                    "sort" => {
+                        if !arguments.is_empty() {
+                            return Err(FlowError::runtime_error("sort() expects no arguments".to_string()));
+                        }
+                        arr_copy.sort();
+                        Ok(Value::Array(arr_copy))
                     }
                     _ => Err(FlowError::runtime_error(format!("Array has no method '{}'", method)))
                 }

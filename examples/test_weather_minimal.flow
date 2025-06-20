@@ -1,0 +1,16 @@
+# Minimal weather app test
+import http { http_get as get }
+import std { json_parse }
+
+def test_weather do
+    let url be "http://httpbin.org/get"
+    show "Testing HTTP request"
+    let response be get(url)
+    if response != null then
+        show "Response status: " + response.status
+    else
+        show "Request failed"
+    end
+end
+
+test_weather()

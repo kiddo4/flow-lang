@@ -1,0 +1,8 @@
+# Simple forEach test
+
+let numbers be [1, 2, 3]
+show "Testing forEach:"
+
+# Test with a very simple lambda
+numbers.forEach((x) => x)
+show "forEach completed"

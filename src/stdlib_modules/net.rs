@@ -125,21 +125,165 @@ pub fn http_delete(args: Vec<Value>) -> Result<Value, FlowError> {
     }
 }
 
-// Helper function for making HTTP requests
-// Note: This is a simplified implementation. In production, use a proper HTTP client
+// Helper function for making HTTP requests using std library
 fn make_http_request(
     method: &str,
     url: &str,
     headers: Option<&HashMap<String, Value>>,
     body: Option<&str>
 ) -> Result<Value, String> {
-    // This is a placeholder implementation
-    // In a real implementation, you would use a proper HTTP client library
+    use std::io::{Write, BufRead, BufReader, Read, BufRead as _};
+    use std::net::{TcpStream, ToSocketAddrs};
     
-    let mut response = HashMap::new();
-    response.insert("status".to_string(), Value::Integer(200));
-    response.insert("body".to_string(), Value::String(format!("Mock response for {} {}", method, url)));
-    response.insert("headers".to_string(), Value::Object(FlowObject { properties: HashMap::new() }));
+    // Parse URL
+    let url_parts = parse_url(url)?;
+    let host = &url_parts.host;
+    let port = url_parts.port;
+    let path = &url_parts.path;
+    let is_https = url_parts.scheme == "https";
+    
+    // For HTTPS, we'll need to use a different approach
+    // For now, let's implement HTTP only to avoid TLS dependencies
+    if is_https {
+        return Err("HTTPS not supported in this simple implementation. Use HTTP URLs for testing.".to_string());
+    }
+    
+    // Connect to server
+    let addr = format!("{}:{}", host, port);
+    let mut stream = TcpStream::connect(&addr)
+        .map_err(|e| format!("Failed to connect to {}: {}", addr, e))?;
+    
+    // Build HTTP request
+    let mut request = format!("{} {} HTTP/1.1\r\n", method.to_uppercase(), path);
+    request.push_str(&format!("Host: {}\r\n", host));
+    request.push_str("Connection: close\r\n");
+    request.push_str("User-Agent: FlowLang/1.0\r\n");
+    
+    // Add custom headers
+    if let Some(h) = headers {
+        for (key, value) in h {
+            if let Value::String(val_str) = value {
+                request.push_str(&format!("{}: {}\r\n", key, val_str));
+            }
+        }
+    }
+    
+    // Add body if present
+    if let Some(body_content) = body {
+        request.push_str(&format!("Content-Length: {}\r\n", body_content.len()));
+        request.push_str("\r\n");
+        request.push_str(body_content);
+    } else {
+        request.push_str("\r\n");
+    }
+    
+    // Send request
+    stream.write_all(request.as_bytes())
+        .map_err(|e| format!("Failed to send request: {}", e))?;
+    
+    // Read response
+    let mut reader = BufReader::new(stream);
+    let mut response_line = String::new();
+    reader.read_line(&mut response_line)
+        .map_err(|e| format!("Failed to read response: {}", e))?;
+    
+    // Parse status line
+    let status_code = parse_status_line(&response_line)?;
+    
+    // Read headers
+    let mut response_headers = HashMap::new();
+    loop {
+        let mut line = String::new();
+        reader.read_line(&mut line)
+            .map_err(|e| format!("Failed to read headers: {}", e))?;
+        
+        if line.trim().is_empty() {
+            break; // End of headers
+        }
+        
+        if let Some((key, value)) = parse_header_line(&line) {
+            response_headers.insert(key, Value::String(value));
+        }
+    }
+    
+    // Read body (handle chunked encoding if present)
+    let mut response_body = String::new();
+    
+    // Check if response uses chunked encoding
+    let is_chunked = response_headers.get("transfer-encoding")
+        .map(|v| {
+            if let Value::String(s) = v {
+                s.to_lowercase().contains("chunked")
+            } else {
+                false
+            }
+        })
+        .unwrap_or(false);
+    
+    if is_chunked {
+        // Handle chunked encoding
+        loop {
+            let mut chunk_size_line = String::new();
+            reader.read_line(&mut chunk_size_line)
+                .map_err(|e| format!("Failed to read chunk size: {}", e))?;
+            
+            let chunk_size_str = chunk_size_line.trim();
+            if chunk_size_str.is_empty() {
+                continue;
+            }
+            
+            // Parse chunk size (hexadecimal)
+            let chunk_size = match usize::from_str_radix(chunk_size_str, 16) {
+                Ok(size) => size,
+                Err(_) => {
+                    // If we can't parse as hex, might be end of chunks
+                    if chunk_size_str == "0" {
+                        break;
+                    }
+                    return Err(format!("Invalid chunk size: {}", chunk_size_str));
+                }
+            };
+            
+            if chunk_size == 0 {
+                break; // End of chunks
+            }
+            
+            // Read chunk data
+            let mut chunk_data = vec![0u8; chunk_size];
+            reader.read_exact(&mut chunk_data)
+                .map_err(|e| format!("Failed to read chunk data: {}", e))?;
+            
+            // Convert to string and append
+            let chunk_str = String::from_utf8_lossy(&chunk_data);
+            response_body.push_str(&chunk_str);
+            
+            // Read trailing CRLF after chunk
+            let mut trailing = String::new();
+            reader.read_line(&mut trailing)
+                .map_err(|e| format!("Failed to read chunk trailing: {}", e))?;
+        }
+        
+        // Read any trailing headers (usually empty)
+        loop {
+            let mut line = String::new();
+            reader.read_line(&mut line)
+                .map_err(|e| format!("Failed to read trailing headers: {}", e))?;
+            
+            if line.trim().is_empty() {
+                break;
+            }
+        }
+    } else {
+        // Regular body reading
+        reader.read_to_string(&mut response_body)
+            .map_err(|e| format!("Failed to read response body: {}", e))?;
+    }
+    
+    // Build response object
+    let mut response_map = HashMap::new();
+    response_map.insert("status".to_string(), Value::Integer(status_code));
+    response_map.insert("body".to_string(), Value::String(response_body));
+    response_map.insert("headers".to_string(), Value::Object(FlowObject { properties: response_headers }));
     
     // Add request info for debugging
     let mut request_info = HashMap::new();
@@ -154,9 +298,79 @@ fn make_http_request(
         request_info.insert("body".to_string(), Value::String(b.to_string()));
     }
     
-    response.insert("request".to_string(), Value::Object(FlowObject { properties: request_info }));
+    response_map.insert("request".to_string(), Value::Object(FlowObject { properties: request_info }));
 
-    Ok(Value::Object(FlowObject { properties: response }))
+    Ok(Value::Object(FlowObject { properties: response_map }))
+}
+
+// Helper struct for URL parsing
+struct UrlParts {
+    scheme: String,
+    host: String,
+    port: u16,
+    path: String,
+}
+
+// Simple URL parser
+fn parse_url(url: &str) -> Result<UrlParts, String> {
+    let url = url.trim();
+    
+    // Parse scheme
+    let (scheme, rest) = if url.starts_with("http://") {
+        ("http".to_string(), &url[7..])
+    } else if url.starts_with("https://") {
+        ("https".to_string(), &url[8..])
+    } else {
+        return Err("URL must start with http:// or https://".to_string());
+    };
+    
+    // Find path separator
+    let (host_port, path) = if let Some(slash_pos) = rest.find('/') {
+        (&rest[..slash_pos], &rest[slash_pos..])
+    } else {
+        (rest, "/")
+    };
+    
+    // Parse host and port
+    let (host, port) = if let Some(colon_pos) = host_port.find(':') {
+        let host = host_port[..colon_pos].to_string();
+        let port_str = &host_port[colon_pos + 1..];
+        let port = port_str.parse::<u16>()
+            .map_err(|_| format!("Invalid port number: {}", port_str))?;
+        (host, port)
+    } else {
+        let default_port = if scheme == "https" { 443 } else { 80 };
+        (host_port.to_string(), default_port)
+    };
+    
+    Ok(UrlParts {
+        scheme,
+        host,
+        port,
+        path: path.to_string(),
+    })
+}
+
+// Parse HTTP status line
+fn parse_status_line(line: &str) -> Result<i64, String> {
+    let parts: Vec<&str> = line.trim().split_whitespace().collect();
+    if parts.len() < 2 {
+        return Err("Invalid status line".to_string());
+    }
+    
+    parts[1].parse::<i64>()
+        .map_err(|_| format!("Invalid status code: {}", parts[1]))
+}
+
+// Parse HTTP header line
+fn parse_header_line(line: &str) -> Option<(String, String)> {
+    if let Some(colon_pos) = line.find(':') {
+        let key = line[..colon_pos].trim().to_lowercase();
+        let value = line[colon_pos + 1..].trim().to_string();
+        Some((key, value))
+    } else {
+        None
+    }
 }
 
 // URL utilities

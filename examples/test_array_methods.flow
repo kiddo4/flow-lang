@@ -1,0 +1,52 @@
+# Test file for enhanced array methods (without lambdas for now)
+
+# Create test arrays
+let numbers be [1, 2, 3, 4, 5]
+let words be ["apple", "banana", "cherry"]
+
+show "Original numbers array:"
+show numbers
+
+# Test includes method
+let hasThree be numbers.includes(3)
+show "Array includes 3:"
+show hasThree
+
+let hasNine be numbers.includes(9)
+show "Array includes 9:"
+show hasNine
+
+# Test indexOf method
+let indexOfThree be numbers.indexOf(3)
+show "Index of 3:"
+show indexOfThree
+
+let indexOfNine be numbers.indexOf(9)
+show "Index of 9 (not found):"
+show indexOfNine
+
+# Test join method
+let joined be words.join(", ")
+show "Words joined with comma:"
+show joined
+
+let joinedDefault be numbers.join()
+show "Numbers joined with default separator:"
+show joinedDefault
+
+# Test reverse method
+let reversed be numbers.reverse()
+show "Reversed numbers:"
+show reversed
+show "Original numbers (unchanged):"
+show numbers
+
+# Test sort method
+let unsorted be [3, 1, 4, 1, 5, 9, 2, 6]
+show "Unsorted array:"
+show unsorted
+let sorted be unsorted.sort()
+show "Sorted array:"
+show sorted
+
+show "Basic array method tests completed!"

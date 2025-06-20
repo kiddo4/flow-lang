@@ -36,6 +36,7 @@ pub enum Token {
     Catch,
     True,
     False,
+    Null,
     
     // Operators
     Plus,
@@ -360,6 +361,7 @@ impl Lexer {
             "catch" => Token::Catch,
             "true" => Token::Boolean(true),
             "false" => Token::Boolean(false),
+            "null" => Token::Null,
             "and" => Token::And,
             "or" => Token::Or,
             "not" => Token::Not,

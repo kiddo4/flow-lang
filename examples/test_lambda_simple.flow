@@ -1,0 +1,11 @@
+# Simple lambda test
+
+# Test basic lambda syntax
+let square be (x) => x * x
+show "Lambda created"
+show square
+
+# Test calling lambda
+let result be square(5)
+show "Square of 5:"
+show result

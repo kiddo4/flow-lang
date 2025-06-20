@@ -1,0 +1,39 @@
+# Debug script to test city input and comparison
+
+show "🔍 City Input Debug Test"
+show "========================\n"
+
+# Test direct comparisons
+let test_city be "london"
+show "Testing direct comparison with 'london':"
+if test_city == "london" then
+    show "✅ Direct comparison works"
+else
+    show "❌ Direct comparison failed"
+end
+
+# Test user input
+let user_input be input("Enter 'london' to test: ")
+show "You entered: '" + user_input + "'"
+show "Length: " + user_input.length()
+
+if user_input == "london" then
+    show "✅ User input matches 'london'"
+else
+    show "❌ User input does not match 'london'"
+end
+
+# Test with different cases
+let test_cases be ["london", "London", "LONDON", "paris", "Paris"]
+show "\nTesting various cases:"
+for i from 0 to 4 do
+    let test_case be test_cases[i]
+    show "Testing: '" + test_case + "'"
+    if test_case == "london" then
+        show "  ✅ Matches 'london'"
+    else
+        show "  ❌ Does not match 'london'"
+    end
+end
+
+show "\n🎯 This shows that FlowLang string comparison is case-sensitive!"

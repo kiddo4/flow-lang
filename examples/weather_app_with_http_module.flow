@@ -1,0 +1,145 @@
+# Weather App with HTTP Module
+# This demonstrates the cleaner HTTP module API
+
+# Import HTTP functions with cleaner aliases
+import http { http_get as get }
+import std { json_parse }
+
+# City coordinates database
+def get_city_coordinates with city_name do
+    let lower_city be to_lower(city_name)
+    
+    if lower_city == "london" then
+        return {"lat": 51.5074, "lon": -0.1278, "name": "London"}
+    elif lower_city == "paris" then
+        return {"lat": 48.8566, "lon": 2.3522, "name": "Paris"}
+    elif lower_city == "tokyo" then
+        return {"lat": 35.6762, "lon": 139.6503, "name": "Tokyo"}
+    elif lower_city == "new york" then
+        return {"lat": 40.7128, "lon": -74.0060, "name": "New York"}
+    elif lower_city == "sydney" then
+        return {"lat": -33.8688, "lon": 151.2093, "name": "Sydney"}
+    elif lower_city == "berlin" then
+        return {"lat": 52.5200, "lon": 13.4050, "name": "Berlin"}
+    elif lower_city == "moscow" then
+        return {"lat": 55.7558, "lon": 37.6176, "name": "Moscow"}
+    elif lower_city == "mumbai" then
+        return {"lat": 19.0760, "lon": 72.8777, "name": "Mumbai"}
+    else
+        return null
+    end
+end
+
+# Get weather data using the cleaner HTTP API
+def get_weather_data with lat, lon do
+    let base_url be "http://api.open-meteo.com/v1/forecast"
+    let params be "?latitude=" + lat + "&longitude=" + lon + "&current_weather=true&hourly=temperature_2m,relative_humidity_2m,wind_speed_10m&timezone=auto"
+    let url be base_url + params
+    
+    show "Making HTTP request to: " + url
+    
+    # Using the cleaner 'get' function instead of 'http_get'
+    let response be get(url)
+    
+    if response == null then
+        show "Failed to fetch weather data"
+        return null
+    end
+    
+    if response.status != "200" then
+        show "HTTP Error: " + response.status
+        return null
+    end
+    
+    let weather_data be json_parse(response.body)
+    if weather_data == null then
+        show "Failed to parse weather data"
+        return null
+    end
+    
+    return weather_data
+end
+
+# Display weather information
+def display_weather with city_info, weather_data do
+    show "\nWeather for " + city_info.name + ":"
+    show "========================================"
+    
+    let current be weather_data.current_weather
+    
+    show "Temperature: " + current.temperature + "°C"
+    show "Wind Speed: " + current.windspeed + " km/h"
+    show "Wind Direction: " + current.winddirection + "°"
+    show "Weather Code: " + current.weathercode
+    
+    # Interpret weather code
+    let weather_desc be get_weather_description(current.weathercode)
+    show "Conditions: " + weather_desc
+    
+    show "========================================"
+end
+
+# Get weather description from code
+def get_weather_description with code do
+    if code == 0 then
+        return "Clear sky"
+    elif code == 1 then
+        return "Mainly clear"
+    elif code == 2 then
+        return "Partly cloudy"
+    elif code == 3 then
+        return "Overcast"
+    elif code >= 45 and code <= 48 then
+        return "Foggy"
+    elif code >= 51 and code <= 67 then
+        return "Rainy"
+    elif code >= 71 and code <= 77 then
+        return "Snowy"
+    elif code >= 80 and code <= 82 then
+        return "Rain showers"
+    elif code >= 85 and code <= 86 then
+        return "Snow showers"
+    elif code >= 95 and code <= 99 then
+        return "Thunderstorm"
+    else
+        return "Unknown conditions"
+    end
+end
+
+# Main application loop
+def main do
+    show "Welcome to FlowLang Weather App (HTTP Module Edition)!"
+    show "Now using the cleaner HTTP module API: import http { http_get as get }"
+    show "Available cities: London, Paris, Tokyo, New York, Sydney, Berlin, Moscow, Mumbai"
+    show "Type 'quit' to exit.\n"
+    
+    while true do
+        show "Enter city name: "
+        let city_input be input()
+        
+        if city_input == "quit" then
+            show "Goodbye!"
+            break
+        end
+        
+        let city_info be get_city_coordinates(city_input)
+        
+        if city_info == null then
+            show "City not found. Please try: London, Paris, Tokyo, New York, Sydney, Berlin, Moscow, or Mumbai"
+            continue
+        end
+        
+        show "Found coordinates for " + city_info.name + ": (" + city_info.lat + ", " + city_info.lon + ")"
+        
+        let weather_data be get_weather_data(city_info.lat, city_info.lon)
+        
+        if weather_data != null then
+            display_weather(city_info, weather_data)
+        end
+        
+        show "\n" # Add spacing between requests
+    end
+end
+
+# Start the application
+main()

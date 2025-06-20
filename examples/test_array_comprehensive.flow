@@ -1,0 +1,67 @@
+# Comprehensive Array Methods Test
+
+let numbers be [1, 2, 3, 4, 5]
+show "Original array:"
+show numbers
+show ""
+
+# Test basic array methods (non-lambda)
+show "=== Basic Array Methods ==="
+show "Length:"
+show numbers.length
+
+let copy be numbers.slice(1, 4)
+show "Slice (1, 4):"
+show copy
+
+let includes_3 be numbers.includes(3)
+show "Includes 3:"
+show includes_3
+
+let index_of_4 be numbers.indexOf(4)
+show "Index of 4:"
+show index_of_4
+
+let joined be numbers.join(", ")
+show "Joined:"
+show joined
+
+let reversed be numbers.reverse()
+show "Reversed:"
+show reversed
+
+let sorted be [3, 1, 4, 1, 5].sort()
+show "Sorted [3,1,4,1,5]:"
+show sorted
+show ""
+
+# Test lambda-based array methods
+show "=== Lambda-based Array Methods ==="
+
+# Test map
+let doubled be numbers.map((x) => x * 2)
+show "Map (x * 2):"
+show doubled
+
+# Test filter
+let evens be numbers.filter((x) => x % 2 == 0)
+show "Filter (even numbers):"
+show evens
+
+# Test find
+let found be numbers.find((x) => x > 3)
+show "Find (> 3):"
+show found
+
+# Test forEach (simple)
+show "forEach test (no output expected):"
+numbers.forEach((x) => x)
+show "forEach completed"
+
+# Test method chaining
+let chained be numbers.map((x) => x * 2).filter((x) => x > 4)
+show "Chained (map * 2, filter > 4):"
+show chained
+show ""
+
+show "All array methods tested successfully!"

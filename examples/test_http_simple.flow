@@ -1,0 +1,18 @@
+# Simple HTTP test to see response body
+
+def test_http do
+    let url be "http://api.open-meteo.com/v1/forecast?latitude=51.5074&longitude=-0.1278&current_weather=true"
+    
+    show "Making HTTP request to: " + url
+    let response be http_get(url)
+    
+    if response != null then
+        show "Status: " + response.status
+        show "Response body:"
+        show response.body
+    else
+        show "Request failed"
+    end
+end
+
+test_http()

@@ -1,0 +1,78 @@
+# Direct weather test without user input
+# Tests the core functionality with hardcoded cities
+
+# Function to get city coordinates (same as interactive version)
+def get_city_coordinates with city_name do
+    if city_name == "new york" or city_name == "nyc" then
+        return {"lat": "40.7128", "lon": "-74.006", "name": "New York City"}
+    else
+        if city_name == "london" then
+            return {"lat": "51.5074", "lon": "-0.1278", "name": "London"}
+        else
+            if city_name == "tokyo" then
+                return {"lat": "35.6762", "lon": "139.6503", "name": "Tokyo"}
+            else
+                return null
+            end
+        end
+    end
+end
+
+# Function to simulate weather data
+def get_mock_weather_data with city_info do
+    if city_info == null then
+        return null
+    end
+    
+    return {
+        "temperature": "22",
+        "condition": "Partly Cloudy", 
+        "humidity": "65",
+        "wind_speed": "12",
+        "city": city_info.name
+    }
+end
+
+# Function to display weather
+def display_weather with weather_data do
+    if weather_data == null then
+        show "Weather data not available"
+        return
+    end
+    
+    show "Weather for " + weather_data.city + ":"
+    show "Temperature: " + weather_data.temperature + "°C"
+    show "Condition: " + weather_data.condition
+    show "Humidity: " + weather_data.humidity + "%"
+    show "Wind Speed: " + weather_data.wind_speed + " km/h"
+    show "---"
+end
+
+# Main program - test with hardcoded cities
+show "Direct Weather Test (No User Input)"
+show "===================================="
+show ""
+
+# Test cities array
+let test_cities be ["london", "paris", "tokyo", "new york", "sydney", "invalid_city"]
+
+show "Testing weather lookup for multiple cities:"
+show ""
+
+# Test each city
+for i from 0 to 5 do
+    let city_name be test_cities[i]
+    show "Testing: " + city_name
+    
+    let city_info be get_city_coordinates(city_name)
+    if city_info == null then
+        show "City not found: " + city_name
+        show "---"
+    else
+        show "Found city: " + city_info.name + " (" + city_info.lat + ", " + city_info.lon + ")"
+        let weather_data be get_mock_weather_data(city_info)
+        display_weather(weather_data)
+    end
+end
+
+show "Test completed!"

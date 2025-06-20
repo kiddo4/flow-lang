@@ -1,0 +1,20 @@
+# Simple HTTP module test
+
+# Import HTTP functions with cleaner aliases
+import http { http_get as get }
+
+def test_simple_http do
+    show "Testing HTTP module with cleaner API..."
+    
+    let response be get("http://httpbin.org/get")
+    
+    if response != null then
+        show "✅ HTTP request successful!"
+        show "Status: " + response.status
+    else
+        show "❌ HTTP request failed"
+    end
+end
+
+test_simple_http()
+show "Done!"

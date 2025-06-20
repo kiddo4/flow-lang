@@ -1,0 +1,56 @@
+# Weather App - Fetches real weather data from Open-Meteo API
+# This demonstrates HTTP requests and JSON parsing in FlowLang
+
+# Function to get weather data for a specific location
+def get_weather with latitude, longitude do
+    # Open-Meteo API endpoint - free, no API key required
+    let base_url be "https://api.open-meteo.com/v1/forecast"
+    let params be "?latitude=" + latitude + "&longitude=" + longitude + "&current_weather=true&hourly=temperature_2m,relative_humidity_2m,wind_speed_10m&timezone=auto"
+    let url be base_url + params
+    
+    show "Fetching weather data from: " + url
+    show ""
+    
+    # Make HTTP GET request
+    let response be http_get(url)
+    
+    if response != null then
+        # Parse the JSON response
+        let weather_data be json_parse(response)
+        return weather_data
+    else
+        show "Error: Failed to fetch weather data"
+        return null
+    end
+end
+
+# Function to display current weather
+def display_current_weather with weather_data do
+    if weather_data == null then
+        show "No weather data available"
+        return
+    end
+    
+    let current be weather_data.current_weather
+    let hourly be weather_data.hourly
+    
+    show "=== CURRENT WEATHER ==="
+    show "Temperature: " + current.temperature + "°C"
+    show "Wind Speed: " + current.windspeed + " km/h"
+    show "Wind Direction: " + current.winddirection + "°"
+    show "Weather Code: " + current.weathercode
+    show "Time: " + current.time
+    show ""
+end
+
+# Main program with location selection
+show "🌤️  FlowLang Weather App"
+show "Powered by Open-Meteo API (https://open-meteo.com)"
+show "Select a location:"
+show "1. New York City (40.7128, -74.0060)"
+show "2. London (51.5074, -0.1278)"
+show "3. Tokyo (35.6762, 139.6503)"
+show "4. Sydney (-33.8688, 151.2093)"
+show "5. Custom location"
+
+# Weather data fetching and display logic...

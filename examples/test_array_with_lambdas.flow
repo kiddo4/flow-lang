@@ -1,0 +1,29 @@
+# Test array methods with lambda expressions
+
+let numbers be [1, 2, 3, 4, 5]
+show "Original array:"
+show numbers
+
+# Test map with lambda
+let doubled be numbers.map((x) => x * 2)
+show "Doubled (map):"
+show doubled
+
+# Test filter with lambda
+let evens be numbers.filter((x) => x % 2 == 0)
+show "Even numbers (filter):"
+show evens
+
+# Test find with lambda
+let found be numbers.find((x) => x > 3)
+show "First number > 3 (find):"
+show found
+
+# Test forEach with lambda
+show "forEach test:"
+numbers.forEach((x) => show x * x)
+
+# Test method chaining
+let result be numbers.map((x) => x * 2).filter((x) => x > 4)
+show "Chained (map then filter):"
+show result

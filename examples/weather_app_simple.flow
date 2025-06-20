@@ -1,0 +1,32 @@
+# Simple Weather App with HTTP Module
+# This demonstrates the cleaner HTTP module API
+
+# Import HTTP functions with cleaner aliases
+import http { http_get as get }
+import std { json_parse }
+
+def get_weather_for_london do
+    show "Fetching weather for London..."
+    
+    let url be "http://api.open-meteo.com/v1/forecast?latitude=51.5074&longitude=-0.1278&current_weather=true"
+    let response be get(url)
+    
+    if response != null then
+        show "HTTP request successful!"
+        show "Status: " + response.status
+        
+        let weather_data be json_parse(response.body)
+        if weather_data != null then
+            let current be weather_data.current_weather
+            show "Temperature: " + current.temperature + "°C"
+            show "Wind Speed: " + current.windspeed + " km/h"
+        else
+            show "Failed to parse weather data"
+        end
+    else
+        show "HTTP request failed"
+    end
+end
+
+get_weather_for_london()
+show "Done!"

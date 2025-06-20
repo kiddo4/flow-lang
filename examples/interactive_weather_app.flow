@@ -1,0 +1,201 @@
+# Interactive Weather App with User Input
+# Demonstrates FlowLang's input() function and null handling
+
+# Function to get coordinates for major cities
+def get_city_coordinates with city_name do
+    if city_name == "new york" or city_name == "nyc" then
+        return {"lat": "40.7128", "lon": "-74.006", "name": "New York City"}
+    else
+        if city_name == "london" then
+            return {"lat": "51.5074", "lon": "-0.1278", "name": "London"}
+        else
+            if city_name == "tokyo" then
+                return {"lat": "35.6762", "lon": "139.6503", "name": "Tokyo"}
+            else
+                if city_name == "paris" then
+                    return {"lat": "48.8566", "lon": "2.3522", "name": "Paris"}
+                else
+                    if city_name == "sydney" then
+                        return {"lat": "-33.8688", "lon": "151.2093", "name": "Sydney"}
+                    else
+                        if city_name == "los angeles" or city_name == "la" then
+                            return {"lat": "34.0522", "lon": "-118.2437", "name": "Los Angeles"}
+                        else
+                            return null
+                        end
+                    end
+                end
+            end
+        end
+    end
+end
+
+# Function to get real weather data from Open-Meteo API
+def get_weather_data with city_info do
+    if city_info == null then
+        return null
+    end
+    
+    # Open-Meteo API endpoint - free, no API key required
+    let base_url be "http://api.open-meteo.com/v1/forecast"
+    let params be "?latitude=" + city_info.lat + "&longitude=" + city_info.lon + "&current_weather=true&hourly=temperature_2m,relative_humidity_2m,wind_speed_10m&timezone=auto"
+    let url be base_url + params
+    
+    show "🌐 Fetching real weather data from Open-Meteo API..."
+    show "📡 URL: " + url
+    
+    # Make HTTP GET request
+    let response be http_get(url)
+    
+    if response != null then
+        show "✅ HTTP request successful!"
+        show "📄 Response status: " + response.status
+        
+        if response.status == 200 then
+            # Parse the JSON response
+            let weather_data be json_parse(response.body)
+            if weather_data != null then
+                let current be weather_data.current_weather
+                let hourly be weather_data.hourly
+                
+                # Get current humidity from hourly data (first entry)
+                let humidity be 50  # Default fallback
+                if hourly != null then
+                    if hourly.relative_humidity_2m != null then
+                        let humidity be hourly.relative_humidity_2m[0]
+                    end
+                end
+                
+                return {
+                    "temperature": current.temperature,
+                    "humidity": humidity,
+                    "wind_speed": current.windspeed,
+                    "conditions": get_weather_description(current.weathercode),
+                    "city": city_info.name,
+                    "note": "Real data from Open-Meteo API"
+                }
+            else
+                show "❌ Failed to parse weather data JSON"
+                return null
+            end
+        else
+            show "❌ HTTP request failed with status: " + response.status
+            return null
+        end
+    else
+        show "❌ Failed to make HTTP request"
+        return null
+    end
+end
+
+# Function to get weather description from weather code
+def get_weather_description with code do
+    if code == 0 then
+        return "Clear sky"
+    else
+        if code == 1 then
+            return "Mainly clear"
+        else
+            if code == 2 then
+                return "Partly cloudy"
+            else
+                if code == 3 then
+                    return "Overcast"
+                else
+                    if code >= 45 and code <= 48 then
+                        return "Foggy"
+                    else
+                        if code >= 51 and code <= 67 then
+                            return "Rainy"
+                        else
+                            if code >= 71 and code <= 77 then
+                                return "Snowy"
+                            else
+                                if code >= 80 and code <= 99 then
+                                    return "Thunderstorm"
+                                else
+                                    return "Unknown weather"
+                                end
+                            end
+                        end
+                    end
+                end
+            end
+        end
+    end
+end
+
+# Function to display weather information
+def display_weather with weather_data do
+    if weather_data == null then
+        show "❌ Weather data not available"
+        return
+    end
+    
+    show "🌤️  Weather for " + weather_data.city
+    show "🌡️  Temperature: " + weather_data.temperature + "°C"
+    show "💧 Humidity: " + weather_data.humidity + "%"
+    show "💨 Wind Speed: " + weather_data.wind_speed + " km/h"
+    show "☁️  Conditions: " + weather_data.conditions
+    show ""
+end
+
+# Function to show available cities
+def show_available_cities do
+    show "Available cities:"
+    show "• New York (nyc)"
+    show "• London"
+    show "• Tokyo"
+    show "• Paris"
+    show "• Sydney"
+    show "• Los Angeles (la)"
+    show ""
+end
+
+# Main program
+show "🌤️  Interactive FlowLang Weather App"
+show "=====================================\n"
+
+show "This app demonstrates:"
+show "✅ User input with input() function"
+show "✅ Null value handling"
+show "✅ String comparison and city lookup"
+show "✅ Object creation and property access\n"
+
+show_available_cities()
+
+let continue be true
+
+while continue do
+    let city_input be input("Enter a city name (or 'quit' to exit): ")
+    
+    if city_input == "quit" or city_input == "exit" then
+        let continue be false
+        show "👋 Thanks for using the Weather App!"
+    else
+        let city_coords be get_city_coordinates(city_input)
+        
+        if city_coords == null then
+            show "❌ City not found. Please try one of the available cities.\n"
+            show_available_cities()
+        else
+            show "🔍 Looking up weather for " + city_coords.name + "..."
+            let weather be get_weather_data(city_coords)
+            display_weather(weather)
+            
+            let another be input("Check another city? (y/n): ")
+            if another != "y" and another != "yes" then
+                let continue be false
+                show "👋 Thanks for using the Weather App!"
+            end
+        end
+    end
+end
+
+show "\n🎉 Demo completed successfully!"
+show "This example showed how FlowLang handles:"
+show "• User input and interaction"
+show "• Null checking and error handling"
+show "• String manipulation and comparison"
+show "• Object creation and property access"
+show "• Control flow with while loops and conditionals"

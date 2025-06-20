@@ -605,6 +605,7 @@ impl Parser {
             Token::BigInteger(bi) => Ok(Expression::Literal(Literal::BigInteger(bi.clone()))),
             Token::Float(f) => Ok(Expression::Literal(Literal::Float(*f))),
             Token::Boolean(b) => Ok(Expression::Literal(Literal::Boolean(*b))),
+            Token::Null => Ok(Expression::Literal(Literal::Null)),
             Token::Identifier(name) => Ok(Expression::Identifier(name.clone())),
             Token::LeftParen => {
                 // We already advanced past the LeftParen, so we need to step back

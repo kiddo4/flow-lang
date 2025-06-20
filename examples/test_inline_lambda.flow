@@ -1,0 +1,9 @@
+# Test inline lambda in method call
+
+let numbers be [1, 2, 3]
+show "Original:"
+show numbers
+
+let result be numbers.map((x) => x * 2)
+show "Doubled:"
+show result

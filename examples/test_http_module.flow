@@ -1,0 +1,74 @@
+# Test the new HTTP module import functionality
+
+show "=== Testing HTTP Module Import ==="
+
+# Method 1: Import the entire http module
+import http
+
+def test_http_module do
+    show "1. Testing http module import:"
+    let response be http.http_get("http://httpbin.org/get")
+    if response != null then
+        show "   ✅ http.http_get works!"
+        show "   Status: " + response.status
+    else
+        show "   ❌ http.http_get failed"
+    end
+end
+
+# Method 2: Import specific HTTP methods
+import http { http_get, http_post }
+
+def test_specific_http_import do
+    show "\n2. Testing specific HTTP function imports:"
+    let response be http_get("http://httpbin.org/get")
+    if response != null then
+        show "   ✅ Direct http_get works!"
+        show "   Status: " + response.status
+    else
+        show "   ❌ Direct http_get failed"
+    end
+end
+
+# Method 3: Import with aliases (more intuitive naming)
+import http { http_get as get, http_post as post, http_put as put, http_delete as delete }
+
+def test_aliased_http_import do
+    show "\n3. Testing aliased HTTP imports (cleaner API):"
+    let response be get("http://httpbin.org/get")
+    if response != null then
+        show "   ✅ Aliased 'get' function works!"
+        show "   Status: " + response.status
+        show "   💡 Much cleaner: get() instead of http_get()"
+    else
+        show "   ❌ Aliased 'get' function failed"
+    end
+end
+
+# Method 4: Import http module with alias
+import http as client
+
+def test_module_alias do
+    show "\n4. Testing HTTP module with alias:"
+    let response be client.http_get("http://httpbin.org/get")
+    if response != null then
+        show "   ✅ client.http_get works!"
+        show "   Status: " + response.status
+    else
+        show "   ❌ client.http_get failed"
+    end
+end
+
+test_http_module()
+test_specific_http_import()
+test_aliased_http_import()
+test_module_alias()
+
+show "\n=== Summary ==="
+show "✅ HTTP module now available for import!"
+show "Available import patterns:"
+show "  • import http                    (use http.http_get)"
+show "  • import http { http_get }       (use http_get directly)"
+show "  • import http { http_get as get } (use get directly)"
+show "  • import http as client          (use client.http_get)"
+show "\n💡 This provides a much cleaner and more organized API!"

@@ -1,0 +1,109 @@
+
+# This version works without user input - demonstrates multiple cities
+
+# Function to get weather data for a specific location
+def get_weather with latitude, longitude do
+    # Open-Meteo API endpoint - free, no API key required
+    let base_url be "https://api.open-meteo.com/v1/forecast"
+    let params be "?latitude=" + latitude + "&longitude=" + longitude + "&current_weather=true&hourly=temperature_2m,relative_humidity_2m,wind_speed_10m&timezone=auto"
+    let url be base_url + params
+    
+    show "Fetching from: " + url
+    
+    # Make HTTP GET request
+    let response be http_get(url)
+    
+    if response != null then
+        # Parse the JSON response
+        let weather_data be json_parse(response)
+        return weather_data
+    else
+        show "Error: Failed to fetch weather data"
+        return null
+    end
+end
+
+# Function to display current weather
+def display_current_weather with weather_data, city_name do
+    if weather_data == null then
+        show "No weather data available for " + city_name
+        return
+    end
+    
+    let current be weather_data.current_weather
+    
+    show "=== " + city_name + " CURRENT WEATHER ==="
+    show "Temperature: " + current.temperature + "°C"
+    show "Wind Speed: " + current.windspeed + " km/h"
+    show "Wind Direction: " + current.winddirection + "°"
+    show "Time: " + current.time
+    
+    # Add weather description
+    let description be get_weather_description(current.weathercode)
+    show "Conditions: " + description
+    show ""
+end
+
+# Function to get weather description from weather code
+def get_weather_description with code do
+    if code == 0 then
+        return "Clear sky"
+    else
+        if code == 1 then
+            return "Mainly clear"
+        else
+            if code == 2 then
+                return "Partly cloudy"
+            else
+                if code == 3 then
+                    return "Overcast"
+                else
+                    if code >= 45 and code <= 48 then
+                        return "Foggy"
+                    else
+                        if code >= 51 and code <= 67 then
+                            return "Rainy"
+                        else
+                            if code >= 71 and code <= 77 then
+                                return "Snowy"
+                            else
+                                if code >= 80 and code <= 99 then
+                                    return "Thunderstorm"
+                                else
+                                    return "Unknown weather"
+                                end
+                            end
+                        end
+                    end
+                end
+            end
+        end
+    end
+end
+
+# Main program
+show "🌤️  FlowLang Weather App"
+show "Powered by Open-Meteo API (https://open-meteo.com)"
+show "Demonstrating real-time weather data fetching"
+# show "=".repeat(50)
+show ""
+
+# Demo cities with their coordinates
+let cities be [
+    {"name": "New York City", "lat": 40.7128, "lon": -74.0060},
+    {"name": "London", "lat": 51.5074, "lon": -0.1278},
+    {"name": "Tokyo", "lat": 35.6762, "lon": 139.6503}
+]
+
+show "Fetching weather data for 3 major cities..."
+show ""
+
+# Get weather for each city
+for i from 0 to 2 do
+    let city be cities[i]
+    let weather be get_weather(city.lat, city.lon)
+    display_current_weather(weather, city.name)
+end
+
+show "✅ Weather data demonstration complete!"
+show "This shows FlowLang can fetch real data from the internet! 🌐"
