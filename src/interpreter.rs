@@ -169,7 +169,7 @@ impl Interpreter {
     }
     
     fn handle_crypto_import(&mut self, imports: &ImportType) -> Result<()> {
-        let crypto_functions = vec!["hash_sha256", "hash_md5", "generate_uuid"];
+        let crypto_functions = vec!["hash_string", "md5_hash", "sha256_hash", "base64_encode", "base64_decode", "hex_encode", "hex_decode", "random_int", "random_float", "random_string", "set_random_seed", "generate_uuid"];
         self.handle_module_import("crypto", &crypto_functions, imports)
     }
     

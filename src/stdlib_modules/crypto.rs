@@ -300,3 +300,17 @@ pub fn set_random_seed(args: Vec<Value>) -> Result<Value, FlowError> {
         _ => Err(FlowError::runtime_error("set_random_seed expects integer argument"))
     }
 }
+
+// UUID generation
+pub fn generate_uuid(_args: Vec<Value>) -> Result<Value, FlowError> {
+    // Generate a simple UUID v4-like string
+    let uuid = format!(
+        "{:08x}-{:04x}-4{:03x}-{:04x}-{:012x}",
+        simple_random() as u32,
+        (simple_random() as u16) & 0xffff,
+        (simple_random() as u16) & 0x0fff,
+        ((simple_random() as u16) & 0x3fff) | 0x8000,
+        (simple_random() as u64) & 0xffffffffffff
+    );
+    Ok(Value::String(uuid))
+}

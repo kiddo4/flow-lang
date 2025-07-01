@@ -1,38 +1,46 @@
-# Test file for the new hybrid import system in FlowLang
+# FlowLang Import Test Suite
+# This file tests various import syntaxes and functionalities
+
+# Import std for global access functions
+import std
 
 # Test 1: Traditional global access (backward compatibility)
 show "=== Test 1: Global Access (Backward Compatibility) ==="
-write_file "test1.txt" "Hello from global access"
-let content1 be read_file "test1.txt"
+write_file("test1.txt", "Hello from global access")
+let content1 be read_file("test1.txt")
 show "Global access result: " + content1
 
 # Test 2: Import entire std module
 show "\n=== Test 2: Import std (All Functions) ==="
-import std
-write_file "test2.txt" "Hello from std import"
-let content2 be read_file "test2.txt"
+# std already imported above
+write_file("test2.txt", "Hello from std import")
+let content2 be read_file("test2.txt")
 show "Std import result: " + content2
 
 # Test 3: Import specific functions from std
 show "\n=== Test 3: Import Specific Functions ==="
-import std { json_stringify, hash_sha256 }
+import std { json_stringify, sha256_hash }
 let test_obj be { "name": "FlowLang", "version": "1.0" }
-let json_str be json_stringify test_obj
+let json_str be json_stringify(test_obj)
 show "JSON stringify result: " + json_str
-let hash_result be hash_sha256 "test string"
+let hash_result be sha256_hash("test string")
 show "Hash result: " + hash_result
 
 # Test 4: Import with aliases
 show "\n=== Test 4: Import with Aliases ==="
 import std as stdlib
-let env_var be stdlib.get_env "PATH"
-show "Environment variable (via alias): " + (if env_var then "Found" else "Not found")
+let env_var be stdlib.get_env("PATH")
+if env_var then
+    show "Environment variable (via alias): Found"
+else
+    show "Environment variable (via alias): Not found"
+end
 
 # Test 5: Import specific functions with aliases
 show "\n=== Test 5: Import Specific Functions with Aliases ==="
 import std { write_file as write, read_file as read }
-write "test5.txt" "Hello from aliased functions"
-let content5 be read "test5.txt"
+write("test5.txt", "Hello from aliased functions")
+let content5 be read("test5.txt")
 show "Aliased functions result: " + content5
 
 # Test 6: Import specific modules
@@ -41,26 +49,26 @@ import io { write_file, read_file }
 import crypto { generate_uuid }
 import random { random_int }
 
-write_file "test6.txt" "Module-specific import test"
-let content6 be read_file "test6.txt"
+write_file("test6.txt", "Module-specific import test")
+let content6 be read_file("test6.txt")
 show "IO module result: " + content6
 
-let uuid be generate_uuid
+let uuid be generate_uuid()
 show "Generated UUID: " + uuid
 
-let rand_num be random_int 1 100
+let rand_num be random_int(1, 100)
 show "Random number: " + rand_num
 
 # Test 7: Import modules with aliases
 show "\n=== Test 7: Import Modules with Aliases ==="
 import json as j
-import crypto as c
+import crypto { md5_hash }
 
 let test_data be { "test": true, "number": 42 }
-let json_output be j.json_stringify test_data
+let json_output be j.json_stringify(test_data)
 show "JSON module alias result: " + json_output
 
-let hash_output be c.hash_md5 "test data"
+let hash_output be md5_hash("test data")
 show "Crypto module alias result: " + hash_output
 
 show "\n=== All Import Tests Completed Successfully! ==="

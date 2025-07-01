@@ -1,0 +1,4 @@
+import io { write_file, read_file }
+import crypto { generate_uuid }
+import random { random_int }
+show "test completed"
