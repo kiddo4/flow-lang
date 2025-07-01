@@ -1,0 +1,2 @@
+import std
+show "Testing import"

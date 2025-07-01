@@ -1,0 +1,2 @@
+import crypto { generate_uuid }
+show "test"

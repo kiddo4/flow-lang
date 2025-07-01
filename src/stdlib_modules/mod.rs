@@ -82,6 +82,7 @@ impl StandardLibraryRegistry {
         self.register("random_float", crypto::random_float);
         self.register("random_string", crypto::random_string);
         self.register("set_random_seed", crypto::set_random_seed);
+        self.register("generate_uuid", crypto::generate_uuid);
     }
     
     /// Register a single function
